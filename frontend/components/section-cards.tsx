@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient, type BurnSummary } from "@/lib/api";
 import { formatTacAmount } from "@/lib/utils";
 import { usePeriod } from "@/contexts/period-context";
+import { Star } from "lucide-react";
 
 export function SectionCards() {
   const [data, setData] = useState<BurnSummary | null>(null);
@@ -87,13 +88,21 @@ export function SectionCards() {
         100
       : 0;
 
+  const TAC_LABEL = () => {
+    return (
+      <Badge variant="default" className="text-sm rounded-lg ">
+        $TAC
+      </Badge>
+    );
+  };
+
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card>
         <CardHeader>
           <CardDescription>Total Inflation Rewards</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {formatTacAmount(data.totalInflationRewards)} TAC
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
+            {formatTacAmount(data.totalInflationRewards)} <TAC_LABEL />
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -113,8 +122,8 @@ export function SectionCards() {
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Total Burn Required</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {formatTacAmount(data.totalBurnAmount)} TAC
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
+            {formatTacAmount(data.totalBurnAmount)} <TAC_LABEL />
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -136,15 +145,11 @@ export function SectionCards() {
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Commission Compliance</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             {compliancePercentage.toFixed(0)}%
           </CardTitle>
           <CardAction>
-            <Badge
-              variant={
-                data.allCommissionRatesCorrect ? "default" : "destructive"
-              }
-            >
+            <Badge variant={"outline"}>
               {data.allCommissionRatesCorrect ? (
                 <IconCheck className="size-4" />
               ) : (
@@ -173,8 +178,8 @@ export function SectionCards() {
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Active Validators</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          <CardDescription>Active Restricted Validators</CardDescription>
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             {data.activeValidators}/20
           </CardTitle>
           <CardAction>
@@ -189,7 +194,7 @@ export function SectionCards() {
             Restricted validators operational <IconUsers className="size-4" />
           </div>
           <div className="text-muted-foreground">
-            {20 - data.activeValidators} validators inactive
+            {data.activeValidators} of 20 validators are restricted
           </div>
         </CardFooter>
       </Card>

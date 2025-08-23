@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { apiClient, type BurnSummary } from "@/lib/api";
 import { formatTacAmount } from "@/lib/utils";
@@ -20,6 +20,16 @@ import {
 } from "@/components/ui/chart";
 
 export const description = "Monthly burn amounts chart";
+
+// Helper function to format large numbers as M/K
+const formatLargeNumber = (value: number) => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  } else if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}K`;
+  }
+  return value.toString();
+};
 
 // Base data structure for Jan-Aug 2025
 const getBaseChartData = () => [
@@ -127,13 +137,19 @@ export function ChartAreaInteractive() {
                 tickMargin={8}
                 minTickGap={32}
               />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={formatLargeNumber}
+              />
               <ChartTooltip
                 cursor={false}
                 content={
                   <ChartTooltipContent
                     labelFormatter={(value) => `${value} 2025`}
                     formatter={(value, name) => [
-                      `${formatTacAmount(value as number)} TAC`,
+                      `${formatLargeNumber(value as number)} TAC`,
                       name,
                     ]}
                     indicator="dot"

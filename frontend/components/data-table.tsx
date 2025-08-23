@@ -282,7 +282,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     cell: ({ row }) => (
-      <Badge variant={row.original.shouldBurn ? "default" : "secondary"}>
+      <Badge variant={row.original.shouldBurn ? "outline" : "secondary"}>
         {row.original.shouldBurn ? "Burn Required" : "No Action"}
       </Badge>
     ),
