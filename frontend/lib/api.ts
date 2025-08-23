@@ -3,7 +3,8 @@
  * Handles communication with the backend REST API
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// Use Next.js API routes instead of external backend
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export interface BurnSummary {
   timestamp: string;
@@ -79,16 +80,18 @@ class ApiClient {
 
   private async request<T>(endpoint: string): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     try {
       const response = await fetch(url, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `API request failed: ${response.status} ${response.statusText}`
+        );
       }
 
       return response.json();
@@ -99,34 +102,36 @@ class ApiClient {
   }
 
   async getHealthStatus(): Promise<HealthStatus> {
-    return this.request<HealthStatus>('/api/health');
+    return this.request<HealthStatus>("/api/health");
   }
 
   async getBurnSummary(period?: string): Promise<BurnSummary> {
-    const queryParam = period ? `?period=${encodeURIComponent(period)}` : '';
+    const queryParam = period ? `?period=${encodeURIComponent(period)}` : "";
     return this.request<BurnSummary>(`/api/burn-summary${queryParam}`);
   }
 
   async getValidators(period?: string): Promise<ValidatorsResponse> {
-    const queryParam = period ? `?period=${encodeURIComponent(period)}` : '';
+    const queryParam = period ? `?period=${encodeURIComponent(period)}` : "";
     return this.request<ValidatorsResponse>(`/api/validators${queryParam}`);
   }
 
   async getBurnReport(period?: string): Promise<any> {
-    const queryParam = period ? `?period=${encodeURIComponent(period)}` : '';
+    const queryParam = period ? `?period=${encodeURIComponent(period)}` : "";
     return this.request<any>(`/api/burn-report${queryParam}`);
   }
 
   async clearCache(): Promise<{ message: string; timestamp: string }> {
     const response = await fetch(`${this.baseUrl}/api/clear-cache`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Cache clear failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Cache clear failed: ${response.status} ${response.statusText}`
+      );
     }
 
     return response.json();

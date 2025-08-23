@@ -46,7 +46,7 @@ export function SectionCards() {
 
   if (loading) {
     return (
-      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="@container/card">
             <CardHeader>
@@ -64,7 +64,7 @@ export function SectionCards() {
 
   if (error || !data) {
     return (
-      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
         <Card className="@container/card">
           <CardHeader>
             <CardDescription>Error</CardDescription>
@@ -78,8 +78,8 @@ export function SectionCards() {
   }
 
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-      <Card className="@container/card">
+    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      <Card>
         <CardHeader>
           <CardDescription>Total Burn Amount</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
@@ -104,15 +104,12 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Active Validators</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {data.activeValidators}/{data.totalValidators}
+            {data.activeValidators}/20
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
               <IconUsers className="size-4" />
-              {((data.activeValidators / data.totalValidators) * 100).toFixed(
-                0
-              )}
-              % Active
+              {((data.activeValidators / 20) * 100).toFixed(0)}% Active
             </Badge>
           </CardAction>
         </CardHeader>
@@ -121,7 +118,7 @@ export function SectionCards() {
             Restricted validators operational <IconUsers className="size-4" />
           </div>
           <div className="text-muted-foreground">
-            {data.totalValidators - data.activeValidators} validators inactive
+            {20 - data.activeValidators} validators inactive
           </div>
         </CardFooter>
       </Card>

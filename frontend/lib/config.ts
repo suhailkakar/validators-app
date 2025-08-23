@@ -2,13 +2,37 @@
  * Configuration for TAC Validator Burn Calculator
  */
 
-const { getEnvironmentConfig } = require("./environment");
-const { validateCompleteConfig } = require("../utils/configValidator");
-
 // Load environment configuration
+function getEnvironmentConfig() {
+  return {
+    // TAC Chain Configuration (real values)
+    chainId: process.env.TAC_CHAIN_ID || "tacchain_239-1",
+    rpcEndpoint:
+      process.env.TAC_RPC_ENDPOINT || "https://tendermint.rpc.tac.build",
+    restEndpoint:
+      process.env.TAC_REST_ENDPOINT || "https://cosmos-api.rpc.tac.build",
+    tokenDenom: process.env.TAC_TOKEN_DENOM || "utac",
+    tokenDecimals: parseInt(process.env.TAC_TOKEN_DECIMALS || "18"),
+
+    // Burn address (real TAC Foundation burn address)
+    burnAddress:
+      process.env.TAC_BURN_ADDRESS ||
+      "tac1qqqqqqqqqqqqqqqqqqqqqqqqqqqqph4dsdprc8",
+
+    // API Configuration
+    requestTimeout: parseInt(process.env.API_TIMEOUT || "30000"),
+    retryAttempts: parseInt(process.env.API_RETRY_ATTEMPTS || "3"),
+    retryDelay: parseInt(process.env.API_RETRY_DELAY || "1000"),
+
+    // Logging
+    logLevel: process.env.LOG_LEVEL || "info",
+    logFormat: process.env.LOG_FORMAT || "json",
+  };
+}
+
 const envConfig = getEnvironmentConfig();
 
-module.exports = {
+export const config = {
   // TAC Chain Configuration (from environment)
   chain: {
     chainId: envConfig.chainId,
@@ -55,10 +79,4 @@ module.exports = {
   },
 };
 
-// Validate the complete configuration
-const validation = validateCompleteConfig(module.exports);
-if (!validation.valid) {
-  throw new Error(
-    `Configuration validation failed: ${validation.errors.join(", ")}`
-  );
-}
+export default config;

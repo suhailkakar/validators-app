@@ -3,76 +3,93 @@
  * Specialized functions to fetch and process validator information for burn calculations
  */
 
-const CosmosClient = require("./cosmosClient");
-const TransactionService = require("./transactionService");
-const logger = require("../utils/logger");
-const config = require("../config/config");
-const {
+import {
+  CosmosClient,
+  type ValidatorInfo,
+  type RewardAmount,
+} from "./cosmosClient";
+import { config } from "./config";
+import {
   calculateBurnAmount,
   addUtacAmounts,
   isValidUtacAmount,
   formatTacAmount,
-} = require("../utils/tokenConverter");
-const {
-  ValidationError,
-  CalculationError,
-  handleAsyncOperation,
-} = require("../utils/errorHandler");
+} from "./tokenConverter";
 
-class ValidatorService {
+export interface ValidatorDetails {
+  address: string;
+  moniker: string;
+  status: string;
+  commissionRate: number;
+  commissionRateStr: string;
+  isActive: boolean;
+  isJailed: boolean;
+
+  // Raw amounts in utac
+  outstandingRewardsUtac: string;
+  unclaimedCommissionUtac: string;
+  claimedCommissionUtac: string;
+  totalCommissionUtac: string;
+  totalRewardsUtac: string;
+
+  // Burn calculation
+  burnAmount: string;
+  validatorKeeps: string;
+
+  // Human-readable amounts
+  outstandingRewardsTac: string;
+  unclaimedCommissionTac: string;
+  claimedCommissionTac: string;
+  totalCommissionTac: string;
+  totalRewardsTac: string;
+  burnAmountTac: string;
+  validatorKeepsTac: string;
+
+  // Validation
+  commissionIssues: any[];
+  hasRewards: boolean;
+  hasCommission: boolean;
+
+  // Metadata
+  fetchedAt: string;
+}
+
+export class ValidatorService {
+  private cosmosClient: CosmosClient;
+  private restrictedValidators: string[];
+  private expectedCommissionRate: number;
+  private burnRate: number;
+
   constructor() {
     this.cosmosClient = new CosmosClient();
-    this.transactionService = new TransactionService();
     this.restrictedValidators = config.restrictedValidators;
-    this.serviceLogger = logger.withContext("validator-service");
     this.expectedCommissionRate = config.business.validatorCommissionRate; // 0.9 (90%)
     this.burnRate = config.business.burnRate; // 0.8 (80%)
-
-    this.serviceLogger.info("Validator service initialized", {
-      restrictedValidatorCount: this.restrictedValidators.length,
-      expectedCommissionRate: this.expectedCommissionRate,
-      burnRate: this.burnRate,
-    });
   }
 
   /**
    * Get detailed information for a single restricted validator
    */
-  async getValidatorDetails(validatorAddress) {
-    return handleAsyncOperation(
-      async () => {
-        this.serviceLogger.debug("Fetching validator details", {
-          validator: validatorAddress,
-        });
+  async getValidatorDetails(
+    validatorAddress: string
+  ): Promise<ValidatorDetails> {
+    const [validator, outstandingRewards, commission] = await Promise.all([
+      this.cosmosClient.getValidator(validatorAddress),
+      this.cosmosClient.getValidatorOutstandingRewards(validatorAddress),
+      this.cosmosClient.getValidatorCommission(validatorAddress),
+    ]);
 
-        const [validator, outstandingRewards, commission, claimedCommission] =
-          await Promise.all([
-            this.cosmosClient.getValidator(validatorAddress),
-            this.cosmosClient.getValidatorOutstandingRewards(validatorAddress),
-            this.cosmosClient.getValidatorCommission(validatorAddress),
-            this.transactionService.getTotalClaimedCommission(validatorAddress), // Add claimed commission
-          ]);
+    // For now, we'll set claimed commission to "0" since we don't have transaction service yet
+    // This can be enhanced later when we add the transaction service
+    const claimedCommission = "0";
 
-        // Process and validate the data
-        const details = this.processValidatorData(
-          validatorAddress,
-          validator,
-          outstandingRewards,
-          commission,
-          claimedCommission
-        );
-
-        logger.validatorOp(validatorAddress, "details_fetched", {
-          moniker: details.moniker,
-          status: details.status,
-          commissionRate: details.commissionRate,
-          totalRewardsUtac: details.totalRewardsUtac,
-        });
-
-        return details;
-      },
-      `get_validator_details_${validatorAddress}`,
-      this.serviceLogger
+    // Process and validate the data
+    return this.processValidatorData(
+      validatorAddress,
+      validator,
+      outstandingRewards,
+      commission,
+      claimedCommission
     );
   }
 
@@ -80,57 +97,39 @@ class ValidatorService {
    * Get detailed information for all restricted validators
    */
   async getAllRestrictedValidatorsDetails() {
-    return handleAsyncOperation(
-      async () => {
-        this.serviceLogger.info("Fetching all restricted validators details");
-
-        const batchResult = await this.cosmosClient.batchGetValidators(
-          this.restrictedValidators
-        );
-
-        const processedValidators = [];
-        const errors = [];
-
-        // Process successful fetches
-        for (const validatorData of batchResult.successful) {
-          try {
-            const details = this.processValidatorData(
-              validatorData.address,
-              validatorData.validator,
-              validatorData.outstandingRewards,
-              validatorData.commission
-            );
-            processedValidators.push(details);
-          } catch (error) {
-            errors.push({
-              validator: validatorData.address,
-              error: error.message,
-            });
-          }
-        }
-
-        // Add failed fetches to errors
-        errors.push(...batchResult.failed);
-
-        this.serviceLogger.info("Restricted validators processing complete", {
-          successful: processedValidators.length,
-          failed: errors.length,
-          totalExpected: this.restrictedValidators.length,
-        });
-
-        if (errors.length > 0) {
-          this.serviceLogger.warn("Some validators had issues", { errors });
-        }
-
-        return {
-          validators: processedValidators,
-          errors,
-          summary: this.generateSummary(processedValidators),
-        };
-      },
-      "get_all_restricted_validators",
-      this.serviceLogger
+    const batchResult = await this.cosmosClient.batchGetValidators(
+      this.restrictedValidators
     );
+
+    const processedValidators: ValidatorDetails[] = [];
+    const errors: any[] = [];
+
+    // Process successful fetches
+    for (const validatorData of batchResult.successful) {
+      try {
+        const details = this.processValidatorData(
+          validatorData.address,
+          validatorData.validator,
+          validatorData.outstandingRewards,
+          validatorData.commission
+        );
+        processedValidators.push(details);
+      } catch (error) {
+        errors.push({
+          validator: validatorData.address,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Add failed fetches to errors
+    errors.push(...batchResult.failed);
+
+    return {
+      validators: processedValidators,
+      errors,
+      summary: this.generateSummary(processedValidators),
+    };
   }
 
   /**
@@ -138,12 +137,12 @@ class ValidatorService {
    * Includes both unclaimed and claimed commission for complete coverage
    */
   processValidatorData(
-    address,
-    validator,
-    outstandingRewards,
-    commission,
-    claimedCommission = "0"
-  ) {
+    address: string,
+    validator: ValidatorInfo,
+    outstandingRewards: RewardAmount[],
+    commission: RewardAmount[],
+    claimedCommission: string = "0"
+  ): ValidatorDetails {
     // Extract basic validator info
     const moniker = validator.description?.moniker || "Unknown";
     const status = validator.status || "UNKNOWN";
@@ -181,22 +180,6 @@ class ValidatorService {
       commissionRate
     );
 
-    // STRICT ENFORCEMENT: Fail if commission rate is not exactly 90%
-    if (commissionIssues.length > 0) {
-      throw new ValidationError(
-        `Restricted validator ${address} has incorrect commission rate: ${(
-          commissionRate * 100
-        ).toFixed(1)}% (must be exactly 90%)`,
-        {
-          validator: address,
-          moniker,
-          currentRate: commissionRate,
-          expectedRate: this.expectedCommissionRate,
-          issues: commissionIssues,
-        }
-      );
-    }
-
     // Calculate burn amounts based on TOTAL COMMISSION (claimed + unclaimed)
     // Burn 80% of total commission, validator keeps 20% of total commission
     const burnCalculation = calculateBurnAmount(
@@ -204,7 +187,7 @@ class ValidatorService {
       this.burnRate
     );
 
-    const details = {
+    const details: ValidatorDetails = {
       address,
       moniker,
       status,
@@ -229,37 +212,20 @@ class ValidatorService {
       unclaimedCommissionTac: formatTacAmount(unclaimedCommissionUtac),
       claimedCommissionTac: formatTacAmount(claimedCommission),
       totalCommissionTac: formatTacAmount(totalCommissionUtac),
-      totalRewardsTac: formatTacAmount(totalRewardsUtac), // ✅ actual total = outstanding + total commission
+      totalRewardsTac: formatTacAmount(totalRewardsUtac),
       burnAmountTac: burnCalculation.burnAmountTac,
       validatorKeepsTac: burnCalculation.validatorKeepsTac,
 
       // Validation
       commissionIssues,
       hasRewards:
-        isValidUtacAmount(totalRewardsUtac) && totalRewardsUtac !== "0", // total rewards for reporting
+        isValidUtacAmount(totalRewardsUtac) && totalRewardsUtac !== "0",
       hasCommission:
-        isValidUtacAmount(totalCommissionUtac) && totalCommissionUtac !== "0", // total commission for burn calculation
+        isValidUtacAmount(totalCommissionUtac) && totalCommissionUtac !== "0",
 
       // Metadata
       fetchedAt: new Date().toISOString(),
     };
-
-    // Log calculation for audit trail
-    logger.calculation(
-      "validator_burn_calculation",
-      {
-        validator: address,
-        unclaimedCommission: unclaimedCommissionUtac,
-        claimedCommission: claimedCommission,
-        totalCommission: totalCommissionUtac,
-        burnRate: this.burnRate,
-        note: "Burn calculated from total commission (claimed + unclaimed)",
-      },
-      {
-        burnAmount: details.burnAmount,
-        validatorKeeps: details.validatorKeeps,
-      }
-    );
 
     return details;
   }
@@ -267,7 +233,7 @@ class ValidatorService {
   /**
    * Validate commission rate for restricted validators
    */
-  validateCommissionRate(validatorAddress, actualRate) {
+  validateCommissionRate(validatorAddress: string, actualRate: number) {
     const issues = [];
     const tolerance = 0.001; // Allow small floating point differences
 
@@ -290,20 +256,13 @@ class ValidatorService {
       });
     }
 
-    if (issues.length > 0) {
-      this.serviceLogger.warn("Commission rate validation issues", {
-        validator: validatorAddress,
-        issues,
-      });
-    }
-
     return issues;
   }
 
   /**
    * Generate summary statistics for all validators
    */
-  generateSummary(validators) {
+  generateSummary(validators: ValidatorDetails[]) {
     const totalValidators = validators.length;
     const activeValidators = validators.filter((v) => v.isActive).length;
     const jailedValidators = validators.filter((v) => v.isJailed).length;
@@ -332,7 +291,7 @@ class ValidatorService {
       );
     }
 
-    const summary = {
+    return {
       totalValidators,
       activeValidators,
       jailedValidators,
@@ -365,55 +324,6 @@ class ValidatorService {
             )
           : "0",
     };
-
-    this.serviceLogger.info("Validator summary generated", summary);
-    return summary;
-  }
-
-  /**
-   * Get validators that need commission rate updates
-   */
-  async getValidatorsNeedingCommissionUpdate() {
-    const result = await this.getAllRestrictedValidatorsDetails();
-
-    const needingUpdate = result.validators.filter(
-      (v) => v.commissionIssues.length > 0
-    );
-
-    this.serviceLogger.info("Validators needing commission updates", {
-      count: needingUpdate.length,
-      validators: needingUpdate.map((v) => ({
-        address: v.address,
-        moniker: v.moniker,
-        currentRate: v.commissionRate,
-        expectedRate: this.expectedCommissionRate,
-      })),
-    });
-
-    return needingUpdate;
-  }
-
-  /**
-   * Get validators with commission ready for burning
-   */
-  async getValidatorsWithBurnableRewards() {
-    const result = await this.getAllRestrictedValidatorsDetails();
-
-    const withCommission = result.validators.filter(
-      (v) => v.hasCommission && v.commissionUtac !== "0"
-    );
-
-    this.serviceLogger.info("Validators with burnable commission", {
-      count: withCommission.length,
-      totalBurnAmount: formatTacAmount(
-        withCommission.reduce(
-          (sum, v) => addUtacAmounts(sum, v.burnAmount),
-          "0"
-        )
-      ),
-    });
-
-    return withCommission;
   }
 
   /**
@@ -444,16 +354,10 @@ class ValidatorService {
         restrictedValidatorCount: this.restrictedValidators.length,
       };
     } catch (error) {
-      this.serviceLogger.error("Validator service health check failed", {
-        error: error.message,
-      });
-
       return {
         healthy: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
 }
-
-module.exports = ValidatorService;

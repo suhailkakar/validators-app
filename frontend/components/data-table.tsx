@@ -338,13 +338,9 @@ export function DataTable() {
         </Select>
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
           <TabsTrigger value="validators">Validators</TabsTrigger>
-          <TabsTrigger value="burn-history">
+          <TabsTrigger disabled value="burn-history">
             Burn History <Badge variant="secondary">0</Badge>
           </TabsTrigger>
-          <TabsTrigger value="reports">
-            Reports <Badge variant="secondary">0</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
       </div>
       <TabsContent

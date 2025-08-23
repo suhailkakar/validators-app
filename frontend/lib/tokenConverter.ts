@@ -3,15 +3,13 @@
  * TAC has 18 decimals: 1 TAC = 1000000000000000000 utac
  */
 
-const { Decimal } = require("@cosmjs/math");
-
 /**
- * Clean decimal string to integer string for Decimal library
- * The Cosmos API returns decimal amounts but @cosmjs/math expects integers
+ * Clean decimal string to integer string for calculations
+ * The Cosmos API returns decimal amounts but we need integers for BigInt
  * @param {string} decimalString - String that might contain decimals
  * @returns {string} Integer string (floored)
  */
-function cleanDecimalString(decimalString) {
+export function cleanDecimalString(decimalString: string | number): string {
   if (!decimalString || decimalString === "0" || decimalString === "")
     return "0";
 
@@ -67,9 +65,26 @@ function cleanDecimalString(decimalString) {
  * @param {string|number} tacAmount - Amount in TAC
  * @returns {string} Amount in utac (base units)
  */
-function tacToUtac(tacAmount) {
-  const decimal = Decimal.fromUserInput(tacAmount.toString(), 18);
-  return decimal.atomics;
+export function tacToUtac(tacAmount: string | number): string {
+  // For exact compatibility with backend, we'll use the same logic
+  const tacStr = tacAmount.toString();
+  const [integerPart, fractionalPart = ""] = tacStr.split(".");
+
+  // Pad fractional part to exactly 18 decimals
+  const paddedFractional = fractionalPart.padEnd(18, "0");
+
+  // If fractional part is longer than 18 digits, truncate it
+  const truncatedFractional = paddedFractional.substring(0, 18);
+
+  // Combine integer and fractional parts
+  const result = (integerPart || "0") + truncatedFractional;
+
+  // Convert to BigInt and back to string to remove leading zeros
+  try {
+    return BigInt(result).toString();
+  } catch {
+    return "0";
+  }
 }
 
 /**
@@ -77,7 +92,7 @@ function tacToUtac(tacAmount) {
  * @param {string} utacAmount - Amount in utac (base units)
  * @returns {string} Amount in TAC with full precision
  */
-function utacToTac(utacAmount) {
+export function utacToTac(utacAmount: string): string {
   const cleanAmount = cleanDecimalString(utacAmount);
   if (cleanAmount === "0") return "0";
 
@@ -111,7 +126,10 @@ function utacToTac(utacAmount) {
  * @param {number} precision - Decimal places to show (default: 6)
  * @returns {string} Formatted TAC amount with proper precision
  */
-function formatTacAmount(utacAmount, precision = 6) {
+export function formatTacAmount(
+  utacAmount: string,
+  precision: number = 6
+): string {
   const cleanAmount = cleanDecimalString(utacAmount);
   if (cleanAmount === "0") return "0";
 
@@ -152,7 +170,10 @@ function formatTacAmount(utacAmount, precision = 6) {
  * @param {number} percentage - Percentage as decimal (0.8 for 80%)
  * @returns {string} Calculated amount in utac (base units)
  */
-function calculatePercentage(utacAmount, percentage) {
+export function calculatePercentage(
+  utacAmount: string,
+  percentage: number
+): string {
   const cleanAmount = cleanDecimalString(utacAmount);
   if (cleanAmount === "0") return "0";
 
@@ -160,7 +181,7 @@ function calculatePercentage(utacAmount, percentage) {
     const bigIntAmount = BigInt(cleanAmount);
 
     // Use deterministic fraction for common percentages to avoid float artifacts
-    let numerator, denominator;
+    let numerator: bigint, denominator: bigint;
 
     // Handle common burn/keep rates deterministically
     if (percentage === 0.8) {
@@ -197,7 +218,7 @@ function calculatePercentage(utacAmount, percentage) {
  * @param {string} amount2 - Second amount in utac
  * @returns {string} Sum in utac
  */
-function addUtacAmounts(amount1, amount2) {
+export function addUtacAmounts(amount1: string, amount2: string): string {
   const cleanAmount1 = cleanDecimalString(amount1);
   const cleanAmount2 = cleanDecimalString(amount2);
 
@@ -211,7 +232,7 @@ function addUtacAmounts(amount1, amount2) {
  * @param {string} utacAmount - Amount to validate
  * @returns {boolean} True if valid
  */
-function isValidUtacAmount(utacAmount) {
+export function isValidUtacAmount(utacAmount: string): boolean {
   try {
     const cleanAmount = cleanDecimalString(utacAmount);
     const bigIntAmount = BigInt(cleanAmount);
@@ -227,7 +248,10 @@ function isValidUtacAmount(utacAmount) {
  * @param {number} burnRate - Burn rate (0.8 for 80%)
  * @returns {object} { burnAmount: string, validatorKeeps: string }
  */
-function calculateBurnAmount(totalRewardsUtac, burnRate = 0.8) {
+export function calculateBurnAmount(
+  totalRewardsUtac: string,
+  burnRate: number = 0.8
+) {
   const cleanAmount = cleanDecimalString(totalRewardsUtac);
   if (cleanAmount === "0") {
     return {
@@ -252,14 +276,3 @@ function calculateBurnAmount(totalRewardsUtac, burnRate = 0.8) {
     totalTac: formatTacAmount(totalRewardsUtac),
   };
 }
-
-module.exports = {
-  tacToUtac,
-  utacToTac,
-  formatTacAmount,
-  calculatePercentage,
-  addUtacAmounts,
-  isValidUtacAmount,
-  calculateBurnAmount,
-  cleanDecimalString, // Export for testing
-};
