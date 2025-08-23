@@ -49,7 +49,8 @@ export function ChartAreaInteractive() {
     async function fetchBurnData() {
       try {
         setLoading(true);
-        const burnSummary = await apiClient.getBurnSummary();
+        // For the chart, we'll use the current period but could expand this later
+        const burnSummary = await apiClient.getBurnSummary("2025-08");
 
         // Parse the total burn amount and add it to August
         const totalBurnAmount =

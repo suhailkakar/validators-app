@@ -101,8 +101,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 height={28}
                 className=" w-7 h-7 rounded-sm "
               />
-              <div className="grid flex-1 text-left text-lg leading-tight">
-                TAC
+              <div className="grid flex-1 text-left text-md font-semibold leading-tight">
+                TAC Validator Dashboard
+                <span className="text-xs text-muted-foreground">v0.1.0</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

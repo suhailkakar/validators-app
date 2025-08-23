@@ -20,17 +20,19 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient, type BurnSummary } from "@/lib/api";
 import { formatTacAmount } from "@/lib/utils";
+import { usePeriod } from "@/contexts/period-context";
 
 export function SectionCards() {
   const [data, setData] = useState<BurnSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { selectedPeriod, refreshKey } = usePeriod();
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        const summary = await apiClient.getBurnSummary();
+        const summary = await apiClient.getBurnSummary(selectedPeriod);
         setData(summary);
         setError(null);
       } catch (err) {
@@ -42,7 +44,7 @@ export function SectionCards() {
     }
 
     fetchData();
-  }, []);
+  }, [selectedPeriod, refreshKey]);
 
   if (loading) {
     return (
@@ -77,18 +79,47 @@ export function SectionCards() {
     );
   }
 
+  // Calculate compliance percentage
+  const compliancePercentage =
+    data.totalValidators > 0
+      ? ((data.totalValidators - (data.alerts.total - data.alerts.warnings)) /
+          data.totalValidators) *
+        100
+      : 0;
+
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card>
         <CardHeader>
-          <CardDescription>Total Burn Amount</CardDescription>
+          <CardDescription>Total Inflation Rewards</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            {formatTacAmount(data.totalInflationRewards)} TAC
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline">
+              <IconUsers className="size-4" />
+              All Validators
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Outstanding + commission rewards <IconUsers className="size-4" />
+          </div>
+          <div className="text-muted-foreground">Period: {data.period}</div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Total Burn Required</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             {formatTacAmount(data.totalBurnAmount)} TAC
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
               <IconFire className="size-4" />
-              Burn Required
+              80% Share
             </Badge>
           </CardAction>
         </CardHeader>
@@ -96,7 +127,47 @@ export function SectionCards() {
           <div className="line-clamp-1 flex gap-2 font-medium">
             80% of commission rewards <IconFire className="size-4" />
           </div>
-          <div className="text-muted-foreground">Period: {data.period}</div>
+          <div className="text-muted-foreground">
+            Must be burned to burn address
+          </div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Commission Compliance</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            {compliancePercentage.toFixed(0)}%
+          </CardTitle>
+          <CardAction>
+            <Badge
+              variant={
+                data.allCommissionRatesCorrect ? "default" : "destructive"
+              }
+            >
+              {data.allCommissionRatesCorrect ? (
+                <IconCheck className="size-4" />
+              ) : (
+                <IconAlert className="size-4" />
+              )}
+              {data.allCommissionRatesCorrect ? "Compliant" : "Issues"}
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            {data.allCommissionRatesCorrect
+              ? "All rates at 90%"
+              : "Rate issues detected"}
+            {data.allCommissionRatesCorrect ? (
+              <IconCheck className="size-4" />
+            ) : (
+              <IconAlert className="size-4" />
+            )}
+          </div>
+          <div className="text-muted-foreground">
+            90% commission rate required
+          </div>
         </CardFooter>
       </Card>
 
@@ -119,67 +190,6 @@ export function SectionCards() {
           </div>
           <div className="text-muted-foreground">
             {20 - data.activeValidators} validators inactive
-          </div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Top Validator Burn</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {data.topValidators.length > 0
-              ? formatTacAmount(data.topValidators[0].burnAmount)
-              : "0.0"}{" "}
-            TAC
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconFire className="size-4" />
-              Highest
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {data.topValidators.length > 0
-              ? data.topValidators[0].moniker
-              : "No data"}{" "}
-            <IconFire className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Largest burn requirement</div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>System Status</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {data.readyForExecution ? "Ready" : "Issues"}
-          </CardTitle>
-          <CardAction>
-            <Badge variant={data.readyForExecution ? "default" : "destructive"}>
-              {data.readyForExecution ? (
-                <IconCheck className="size-4" />
-              ) : (
-                <IconAlert className="size-4" />
-              )}
-              {data.allCommissionRatesCorrect ? "All Good" : "Issues"}
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {data.allCommissionRatesCorrect
-              ? "Commission rates valid"
-              : "Rate issues detected"}
-            {data.readyForExecution ? (
-              <IconCheck className="size-4" />
-            ) : (
-              <IconAlert className="size-4" />
-            )}
-          </div>
-          <div className="text-muted-foreground">
-            {data.alerts.total} total alerts
           </div>
         </CardFooter>
       </Card>

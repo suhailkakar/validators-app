@@ -7,6 +7,12 @@ import {
   IconChevronsLeft,
   IconChevronsRight,
   IconDotsVertical,
+  IconSearch,
+  IconFilter,
+  IconDownload,
+  IconSortAscending,
+  IconSortDescending,
+  IconArrowsSort,
 } from "@tabler/icons-react";
 import {
   ColumnDef,
@@ -23,30 +29,12 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,7 +51,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -75,6 +62,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatTacAmount } from "@/lib/utils";
+import { usePeriod } from "@/contexts/period-context";
 
 export const schema = z.object({
   address: z.string(),
@@ -117,7 +105,22 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "moniker",
-    header: "Validator",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto p-0 font-semibold"
+        >
+          Validator
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : null}
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex flex-col">
@@ -132,14 +135,35 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto p-0 font-semibold"
+        >
+          Status
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : null}
+        </Button>
+      );
+    },
+    filterFn: (row, id, value) => {
+      if (value === "active") return row.original.isActive;
+      if (value === "inactive") return !row.original.isActive;
+      if (value === "issues") return row.original.hasCommissionIssues;
+      return true;
+    },
     cell: ({ row }) => (
       <div className="flex flex-col gap-1">
         <Badge variant={row.original.isActive ? "default" : "secondary"}>
           {row.original.isActive ? "Active" : "Inactive"}
         </Badge>
         {row.original.hasCommissionIssues && (
-          <Badge variant="destructive" className="text-xs">
+          <Badge variant="outline" className="text-xs">
             Commission Issue
           </Badge>
         )}
@@ -148,11 +172,30 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "commissionRate",
-    header: "Commission Rate",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto px-0 py-0 font-semibold group justify-start"
+        >
+          Commission Rate
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
+        </Button>
+      );
+    },
     cell: ({ row }) => (
-      <div className="text-right font-mono">
+      <div className="font-mono pl-0">
         <span
-          className={row.original.hasCommissionIssues ? "text-red-500" : ""}
+          className={
+            row.original.hasCommissionIssues ? "text-muted-foreground" : ""
+          }
         >
           {row.original.commissionRate}
         </span>
@@ -161,23 +204,55 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "totalCommission",
-    header: () => <div className="text-right">Total Commission</div>,
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto px-0 py-0 font-semibold group justify-start"
+        >
+          Total Commission
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
+        </Button>
+      );
+    },
     cell: ({ row }) => (
-      <div className="text-right font-mono">
+      <div className="font-mono pl-0">
         {formatTacAmount(row.original.totalCommission)} TAC
       </div>
     ),
   },
   {
     accessorKey: "burnAmount",
-    header: () => <div className="text-right">Burn Amount</div>,
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto px-0 py-0 font-semibold group justify-start"
+        >
+          Burn Amount
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
+        </Button>
+      );
+    },
     cell: ({ row }) => (
-      <div className="text-right font-mono">
+      <div className="font-mono pl-0">
         <span
           className={
-            row.original.shouldBurn
-              ? "font-semibold text-orange-600 dark:text-orange-400"
-              : "text-muted-foreground"
+            row.original.shouldBurn ? "font-semibold" : "text-muted-foreground"
           }
         >
           {row.original.shouldBurn
@@ -190,9 +265,24 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "shouldBurn",
-    header: "Action Required",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto p-0 font-semibold"
+        >
+          Action Required
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : null}
+        </Button>
+      );
+    },
     cell: ({ row }) => (
-      <Badge variant={row.original.shouldBurn ? "destructive" : "secondary"}>
+      <Badge variant={row.original.shouldBurn ? "default" : "secondary"}>
         {row.original.shouldBurn ? "Burn Required" : "No Action"}
       </Badge>
     ),
@@ -216,9 +306,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           <DropdownMenuItem>Copy Address</DropdownMenuItem>
           <DropdownMenuSeparator />
           {row.original.shouldBurn && (
-            <DropdownMenuItem className="text-orange-600">
-              Execute Burn
-            </DropdownMenuItem>
+            <DropdownMenuItem>Execute Burn</DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -229,11 +317,19 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
 function ValidatorRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   return (
     <TableRow data-state={row.getIsSelected() && "selected"}>
-      {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
+      {row.getVisibleCells().map((cell) => {
+        console.log(cell.column.id);
+        const isNumber = [
+          "commissionRate",
+          "totalCommission",
+          "burnAmount",
+        ].includes(cell.column.id);
+        return (
+          <TableCell key={cell.id} className={isNumber ? "pl-5" : ""}>
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        );
+      })}
     </TableRow>
   );
 }
@@ -253,13 +349,15 @@ export function DataTable() {
     pageIndex: 0,
     pageSize: 10,
   });
+  const [globalFilter, setGlobalFilter] = React.useState("");
+  const { selectedPeriod, refreshKey } = usePeriod();
 
   React.useEffect(() => {
     async function fetchValidators() {
       try {
         setLoading(true);
         const { apiClient } = await import("@/lib/api");
-        const result = await apiClient.getValidators();
+        const result = await apiClient.getValidators(selectedPeriod);
 
         // Transform the API data to match our schema
         const transformedData = result.validators.map((validator) => ({
@@ -285,7 +383,7 @@ export function DataTable() {
     }
 
     fetchValidators();
-  }, []);
+  }, [selectedPeriod, refreshKey]);
 
   const table = useReactTable({
     data,
@@ -296,14 +394,23 @@ export function DataTable() {
       rowSelection,
       columnFilters,
       pagination,
+      globalFilter,
     },
     getRowId: (row) => row.address,
     enableRowSelection: true,
+    enableGlobalFilter: true,
+    globalFilterFn: (row, columnId, filterValue) => {
+      const searchValue = filterValue.toLowerCase();
+      const moniker = row.original.moniker.toLowerCase();
+      const address = row.original.address.toLowerCase();
+      return moniker.includes(searchValue) || address.includes(searchValue);
+    },
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -324,7 +431,6 @@ export function DataTable() {
         <Select defaultValue="validators">
           <SelectTrigger
             className="flex w-fit @4xl/main:hidden"
-            size="sm"
             id="view-selector"
           >
             <SelectValue placeholder="Select a view" />
@@ -343,11 +449,225 @@ export function DataTable() {
           </TabsTrigger>
         </TabsList>
       </div>
-      <TabsContent
-        value="validators"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
-      >
-        <div className="overflow-hidden rounded-lg border">
+      <TabsContent value="validators">
+        <div className="hidden @4xl/main:flex items-center justify-end gap-3 -mt-15 mr-6 mb-5">
+          <div className="relative">
+            <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="pl-10 w-60"
+            />
+          </div>
+
+          <Select
+            value={
+              (table.getColumn("status")?.getFilterValue() as string) ?? "all"
+            }
+            onValueChange={(value) => {
+              if (value === "all") {
+                table.getColumn("status")?.setFilterValue(undefined);
+              } else {
+                table.getColumn("status")?.setFilterValue(value);
+              }
+            }}
+          >
+            <SelectTrigger className="w-40">
+              <IconFilter className="h-4 w-4 mr-1" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="issues">Issues</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={
+              (table.getColumn("shouldBurn")?.getFilterValue() as string) ??
+              "all"
+            }
+            onValueChange={(value) => {
+              if (value === "all") {
+                table.getColumn("shouldBurn")?.setFilterValue(undefined);
+              } else {
+                table.getColumn("shouldBurn")?.setFilterValue(value === "burn");
+              }
+            }}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Actions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Actions</SelectItem>
+              <SelectItem value="burn">Burn</SelectItem>
+              <SelectItem value="none">None</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="outline"
+            onClick={() => {
+              const csvData = table.getFilteredRowModel().rows.map((row) => ({
+                Validator: row.original.moniker,
+                Address: row.original.address,
+                Status: row.original.isActive ? "Active" : "Inactive",
+                "Commission Rate": row.original.commissionRate,
+                "Total Commission": row.original.totalCommission,
+                "Burn Amount": row.original.burnAmount,
+                "Action Required": row.original.shouldBurn
+                  ? "Burn Required"
+                  : "No Action",
+                "Commission Issues": row.original.hasCommissionIssues
+                  ? "Yes"
+                  : "No",
+              }));
+
+              const csv = [
+                Object.keys(csvData[0] || {}).join(","),
+                ...csvData.map((row) => Object.values(row).join(",")),
+              ].join("\n");
+
+              const blob = new Blob([csv], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `validators-${
+                new Date().toISOString().split("T")[0]
+              }.csv`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+
+              toast.success("Table exported successfully!");
+            }}
+            className="gap-2"
+          >
+            <IconDownload className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
+
+        <div className="flex flex-col gap-4 @4xl/main:hidden">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            {/* Global Search */}
+            <div className="relative flex-1">
+              <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              {/* Status Filter */}
+              <Select
+                value={
+                  (table.getColumn("status")?.getFilterValue() as string) ??
+                  "all"
+                }
+                onValueChange={(value) => {
+                  if (value === "all") {
+                    table.getColumn("status")?.setFilterValue(undefined);
+                  } else {
+                    table.getColumn("status")?.setFilterValue(value);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <IconFilter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="issues">Issues</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Burn Action Filter */}
+              <Select
+                value={
+                  (table.getColumn("shouldBurn")?.getFilterValue() as string) ??
+                  "all"
+                }
+                onValueChange={(value) => {
+                  if (value === "all") {
+                    table.getColumn("shouldBurn")?.setFilterValue(undefined);
+                  } else {
+                    table
+                      .getColumn("shouldBurn")
+                      ?.setFilterValue(value === "burn");
+                  }
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Actions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Actions</SelectItem>
+                  <SelectItem value="burn">Burn</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Export Button */}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const csvData = table
+                    .getFilteredRowModel()
+                    .rows.map((row) => ({
+                      Validator: row.original.moniker,
+                      Address: row.original.address,
+                      Status: row.original.isActive ? "Active" : "Inactive",
+                      "Commission Rate": row.original.commissionRate,
+                      "Total Commission": row.original.totalCommission,
+                      "Burn Amount": row.original.burnAmount,
+                      "Action Required": row.original.shouldBurn
+                        ? "Burn Required"
+                        : "No Action",
+                      "Commission Issues": row.original.hasCommissionIssues
+                        ? "Yes"
+                        : "No",
+                    }));
+
+                  const csv = [
+                    Object.keys(csvData[0] || {}).join(","),
+                    ...csvData.map((row) => Object.values(row).join(",")),
+                  ].join("\n");
+
+                  const blob = new Blob([csv], { type: "text/csv" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `validators-${
+                    new Date().toISOString().split("T")[0]
+                  }.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+
+                  toast.success("Table exported successfully!");
+                }}
+                className="gap-2 shrink-0"
+              >
+                <IconDownload className="h-4 w-4" />
+                Export
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border mx-4 lg:mx-6">
           <Table>
             <TableHeader className="bg-muted sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
@@ -370,7 +690,7 @@ export function DataTable() {
             <TableBody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
+                  <TableRow key={i} className="">
                     {Array.from({ length: columns.length }).map((_, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-full" />
@@ -382,7 +702,7 @@ export function DataTable() {
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
-                    className="h-24 text-center text-red-500"
+                    className="h-24 text-center text-muted-foreground"
                   >
                     {error}
                   </TableCell>
@@ -404,7 +724,7 @@ export function DataTable() {
             </TableBody>
           </Table>
         </div>
-        <div className="flex items-center justify-between px-4">
+        <div className="flex items-center justify-between px-6 mt-4">
           <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
@@ -420,7 +740,7 @@ export function DataTable() {
                   table.setPageSize(Number(value));
                 }}
               >
-                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
+                <SelectTrigger className="w-20" id="rows-per-page">
                   <SelectValue
                     placeholder={table.getState().pagination.pageSize}
                   />
@@ -492,184 +812,5 @@ export function DataTable() {
         <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
       </TabsContent>
     </Tabs>
-  );
-}
-
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
-
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--primary)",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "var(--primary)",
-  },
-} satisfies ChartConfig;
-
-function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
-  const isMobile = useIsMobile();
-
-  return (
-    <Drawer direction={isMobile ? "bottom" : "right"}>
-      <DrawerTrigger asChild>
-        <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.header}
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader className="gap-1">
-          <DrawerTitle>{item.header}</DrawerTitle>
-          <DrawerDescription>
-            Showing total visitors for the last 6 months
-          </DrawerDescription>
-        </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-          {!isMobile && (
-            <>
-              <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: 0,
-                    right: 10,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                    hide
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Area
-                    dataKey="mobile"
-                    type="natural"
-                    fill="var(--color-mobile)"
-                    fillOpacity={0.6}
-                    stroke="var(--color-mobile)"
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="desktop"
-                    type="natural"
-                    fill="var(--color-desktop)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
-                    stackId="a"
-                  />
-                </AreaChart>
-              </ChartContainer>
-              <Separator />
-              <div className="grid gap-2">
-                <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month{" "}
-                  <IconTrendingUp className="size-4" />
-                </div>
-                <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
-                </div>
-              </div>
-              <Separator />
-            </>
-          )}
-          <form className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="header">Header</Label>
-              <Input id="header" defaultValue={item.header} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="type">Type</Label>
-                <Select defaultValue={item.type}>
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Table of Contents">
-                      Table of Contents
-                    </SelectItem>
-                    <SelectItem value="Executive Summary">
-                      Executive Summary
-                    </SelectItem>
-                    <SelectItem value="Technical Approach">
-                      Technical Approach
-                    </SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Capabilities">Capabilities</SelectItem>
-                    <SelectItem value="Focus Documents">
-                      Focus Documents
-                    </SelectItem>
-                    <SelectItem value="Narrative">Narrative</SelectItem>
-                    <SelectItem value="Cover Page">Cover Page</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="status">Status</Label>
-                <Select defaultValue={item.status}>
-                  <SelectTrigger id="status" className="w-full">
-                    <SelectValue placeholder="Select a status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Done">Done</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Not Started">Not Started</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="target">Target</Label>
-                <Input id="target" defaultValue={item.target} />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="limit">Limit</Label>
-                <Input id="limit" defaultValue={item.limit} />
-              </div>
-            </div>
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="reviewer">Reviewer</Label>
-              <Select defaultValue={item.reviewer}>
-                <SelectTrigger id="reviewer" className="w-full">
-                  <SelectValue placeholder="Select a reviewer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-                  <SelectItem value="Jamik Tashpulatov">
-                    Jamik Tashpulatov
-                  </SelectItem>
-                  <SelectItem value="Emily Whalen">Emily Whalen</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </form>
-        </div>
-        <DrawerFooter>
-          <Button>Submit</Button>
-          <DrawerClose asChild>
-            <Button variant="outline">Done</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
   );
 }
