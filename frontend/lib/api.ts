@@ -16,6 +16,11 @@ export interface BurnSummary {
   totalBurnAmountRaw: string;
   totalInflationRewards: string;
   totalInflationRewardsRaw: string;
+  accumulatedRewardsBurnt: string;
+  accumulatedRewardsBurntRaw: string;
+  restrictedStakePercentage: string;
+  restrictedStakeUtac: string;
+  totalBondedUtac: string;
   topValidators: Array<{
     moniker: string;
     burnAmount: string;

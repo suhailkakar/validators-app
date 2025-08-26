@@ -45,6 +45,11 @@ export interface RewardAmount {
   amount: string;
 }
 
+export interface StakingPool {
+  bonded_tokens: string;
+  not_bonded_tokens: string;
+}
+
 export class CosmosClient {
   private baseURL: string;
   private chainId: string;
@@ -116,6 +121,17 @@ export class CosmosClient {
     );
 
     return response.validator;
+  }
+
+  /**
+   * Get staking pool totals (bonded and not bonded)
+   */
+  async getStakingPool(): Promise<StakingPool> {
+    const response = await this.request<{ pool: StakingPool }>(
+      "/cosmos/staking/v1beta1/pool"
+    );
+
+    return response.pool;
   }
 
   /**

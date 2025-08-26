@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Dot } from "recharts";
+import { cn } from "@/lib/utils";
 
 import { apiClient, type BurnSummary } from "@/lib/api";
 import { formatTacAmount } from "@/lib/utils";
@@ -31,16 +32,13 @@ const formatLargeNumber = (value: number) => {
   return value.toString();
 };
 
-// Base data structure for Jan-Aug 2025
+// Base data structure for Aug-Dec 2025
 const getBaseChartData = () => [
-  { month: "2025-01", name: "Jan", burnAmount: 0 },
-  { month: "2025-02", name: "Feb", burnAmount: 0 },
-  { month: "2025-03", name: "Mar", burnAmount: 0 },
-  { month: "2025-04", name: "Apr", burnAmount: 0 },
-  { month: "2025-05", name: "May", burnAmount: 0 },
-  { month: "2025-06", name: "Jun", burnAmount: 0 },
-  { month: "2025-07", name: "Jul", burnAmount: 0 },
   { month: "2025-08", name: "Aug", burnAmount: 0 },
+  { month: "2025-09", name: "Sep", burnAmount: null },
+  { month: "2025-10", name: "Oct", burnAmount: null },
+  { month: "2025-11", name: "Nov", burnAmount: null },
+  { month: "2025-12", name: "Dec", burnAmount: null },
 ];
 
 const chartConfig = {
@@ -54,6 +52,7 @@ export function ChartAreaInteractive() {
   const [chartData, setChartData] = React.useState(getBaseChartData());
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [isBlinking, setIsBlinking] = React.useState(false);
 
   React.useEffect(() => {
     async function fetchBurnData() {
@@ -66,16 +65,26 @@ export function ChartAreaInteractive() {
         const totalBurnAmount =
           parseFloat(burnSummary.totalBurnAmount.replace(/,/g, "")) || 0;
 
-        // Update chart data with real burn amount for August
-        const updatedData = getBaseChartData().map((item) => {
-          if (item.month === "2025-08") {
-            return { ...item, burnAmount: totalBurnAmount };
-          }
-          return item;
-        });
+        console.log("Total burn amount:", totalBurnAmount); // Debug log
+
+        // Show Jul-Dec with line from 0 to Aug data, then stop
+        const updatedData = [
+          { month: "2025-07", name: "Jul", burnAmount: 0 },
+          { month: "2025-08", name: "Aug", burnAmount: totalBurnAmount },
+          { month: "2025-09", name: "Sep", burnAmount: null },
+          { month: "2025-10", name: "Oct", burnAmount: null },
+          { month: "2025-11", name: "Nov", burnAmount: null },
+          { month: "2025-12", name: "Dec", burnAmount: null },
+        ];
+
+        console.log("Updated chart data:", updatedData); // Debug log
 
         setChartData(updatedData);
         setError(null);
+
+        // Start blinking animation for August data
+        setIsBlinking(true);
+        setTimeout(() => setIsBlinking(false), 2000); // Stop after 2 seconds
       } catch (err) {
         console.error("Failed to fetch burn data:", err);
         setError("Failed to load burn data");
@@ -95,9 +104,11 @@ export function ChartAreaInteractive() {
         <CardTitle>Monthly Burn Amounts</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            Validator burn requirements by month (2025)
+            Validator burn requirements by month
           </span>
-          <span className="@[540px]/card:hidden">Monthly burns 2025</span>
+          <span className="@[540px]/card:hidden">
+            Monthly burns (Aug 2025 data)
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">

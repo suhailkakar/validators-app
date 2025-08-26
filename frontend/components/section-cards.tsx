@@ -49,7 +49,7 @@ export function SectionCards() {
 
   if (loading) {
     return (
-      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="@container/card">
             <CardHeader>
@@ -67,7 +67,7 @@ export function SectionCards() {
 
   if (error || !data) {
     return (
-      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
         <Card className="@container/card">
           <CardHeader>
             <CardDescription>Error</CardDescription>
@@ -80,14 +80,6 @@ export function SectionCards() {
     );
   }
 
-  // Calculate compliance percentage
-  const compliancePercentage =
-    data.totalValidators > 0
-      ? ((data.totalValidators - (data.alerts.total - data.alerts.warnings)) /
-          data.totalValidators) *
-        100
-      : 0;
-
   const TAC_LABEL = () => {
     return (
       <Badge variant="default" className="text-sm rounded-lg ">
@@ -97,19 +89,14 @@ export function SectionCards() {
   };
 
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
       <Card>
         <CardHeader>
           <CardDescription>Total Inflation Rewards</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             {formatTacAmount(data.totalInflationRewards)} <TAC_LABEL />
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconUsers className="size-4" />
-              All Validators
-            </Badge>
-          </CardAction>
+
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
@@ -121,16 +108,56 @@ export function SectionCards() {
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Burn Required</CardDescription>
+          <CardDescription>Accumulated Rewards Burnt</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {formatTacAmount(data.totalBurnAmount)} <TAC_LABEL />
+            {formatTacAmount(data.accumulatedRewardsBurnt)} <TAC_LABEL />
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
               <IconFire className="size-4" />
-              80% Share
+              From Launch
             </Badge>
           </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Total rewards burnt since network launch{" "}
+            <IconFire className="size-4" />
+          </div>
+          <div className="text-muted-foreground">
+            Currently 0 (no burns executed)
+          </div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>% Supply Staked to Restricted</CardDescription>
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
+            {parseFloat(data.restrictedStakePercentage || "0").toFixed(1)}%
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline">
+              <IconUsers className="size-4" />
+              Network Share
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Share of bonded stake held by restricted set
+          </div>
+          <div className="text-muted-foreground">Period: {data.period}</div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Total Burn Required</CardDescription>
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
+            {formatTacAmount(data.totalBurnAmount)} <TAC_LABEL />
+          </CardTitle>
+
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
@@ -138,40 +165,6 @@ export function SectionCards() {
           </div>
           <div className="text-muted-foreground">
             Must be burned to burn address
-          </div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Commission Compliance</CardDescription>
-          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {compliancePercentage.toFixed(0)}%
-          </CardTitle>
-          <CardAction>
-            <Badge variant={"outline"}>
-              {data.allCommissionRatesCorrect ? (
-                <IconCheck className="size-4" />
-              ) : (
-                <IconAlert className="size-4" />
-              )}
-              {data.allCommissionRatesCorrect ? "Compliant" : "Issues"}
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {data.allCommissionRatesCorrect
-              ? "All rates at 90%"
-              : "Rate issues detected"}
-            {data.allCommissionRatesCorrect ? (
-              <IconCheck className="size-4" />
-            ) : (
-              <IconAlert className="size-4" />
-            )}
-          </div>
-          <div className="text-muted-foreground">
-            90% commission rate required
           </div>
         </CardFooter>
       </Card>

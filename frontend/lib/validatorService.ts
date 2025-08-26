@@ -20,6 +20,7 @@ export interface ValidatorDetails {
   address: string;
   moniker: string;
   status: string;
+  tokens: string;
   commissionRate: number;
   commissionRateStr: string;
   isActive: boolean;
@@ -65,6 +66,13 @@ export class ValidatorService {
     this.restrictedValidators = config.restrictedValidators;
     this.expectedCommissionRate = config.business.validatorCommissionRate; // 0.9 (90%)
     this.burnRate = config.business.burnRate; // 0.8 (80%)
+  }
+
+  /**
+   * Fetch staking pool totals
+   */
+  async getStakingPool() {
+    return this.cosmosClient.getStakingPool();
   }
 
   /**
@@ -191,6 +199,7 @@ export class ValidatorService {
       address,
       moniker,
       status,
+      tokens: validator.tokens || "0",
       commissionRate,
       commissionRateStr,
       isActive: status === "BOND_STATUS_BONDED",

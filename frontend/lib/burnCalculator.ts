@@ -58,6 +58,11 @@ export interface BurnReport {
     totalRewardsUtac: string;
     totalBurnAmountUtac: string;
     totalValidatorKeepsUtac: string;
+
+    // Staking distribution
+    restrictedStakeUtac?: string;
+    totalBondedUtac?: string;
+    restrictedStakePercentage?: string; // e.g., "12.3"
   };
 
   // Individual validator results
@@ -92,6 +97,33 @@ export class BurnCalculator {
     const validatorData =
       await this.validatorService.getAllRestrictedValidatorsDetails();
 
+    // Compute restricted stake total (sum of validator.tokens)
+    let restrictedStakeUtac = "0";
+    for (const v of validatorData.validators) {
+      restrictedStakeUtac = addUtacAmounts(
+        restrictedStakeUtac,
+        v.tokens || "0"
+      );
+    }
+
+    // Fetch total bonded from chain via service
+    const pool = await this.validatorService.getStakingPool();
+    const totalBondedUtac = pool?.bonded_tokens || "0";
+
+    // Calculate percentage (as string with 1 decimal place)
+    let restrictedStakePercentage: string = "0";
+    try {
+      const total = BigInt(totalBondedUtac || "0");
+      const part = BigInt(restrictedStakeUtac || "0");
+      if (total > 0n) {
+        // multiply by 1000 for one decimal place, then divide and format
+        const scaled = (part * 1000n) / total; // tenths of a percent
+        const integer = scaled / 10n;
+        const tenth = scaled % 10n;
+        restrictedStakePercentage = `${integer.toString()}.${tenth.toString()}`;
+      }
+    } catch {}
+
     // Calculate burn amounts
     const burnResults = this.processBurnCalculations(validatorData.validators);
 
@@ -99,7 +131,12 @@ export class BurnCalculator {
     const report = this.generateBurnReport(
       burnResults,
       period,
-      validatorData.errors
+      validatorData.errors,
+      {
+        restrictedStakeUtac,
+        totalBondedUtac,
+        restrictedStakePercentage,
+      }
     );
 
     return report;
@@ -230,7 +267,12 @@ export class BurnCalculator {
   generateBurnReport(
     burnResults: BurnResults,
     period: string,
-    fetchErrors: any[] = []
+    fetchErrors: any[] = [],
+    extras?: {
+      restrictedStakeUtac: string;
+      totalBondedUtac: string;
+      restrictedStakePercentage: string;
+    }
   ): BurnReport {
     const report: BurnReport = {
       // Report metadata
@@ -262,6 +304,9 @@ export class BurnCalculator {
         totalRewardsUtac: burnResults.totals.totalRewardsUtac,
         totalBurnAmountUtac: burnResults.totals.totalBurnAmountUtac,
         totalValidatorKeepsUtac: burnResults.totals.totalValidatorKeepsUtac,
+        restrictedStakeUtac: extras?.restrictedStakeUtac,
+        totalBondedUtac: extras?.totalBondedUtac,
+        restrictedStakePercentage: extras?.restrictedStakePercentage,
       },
 
       // Individual validator results

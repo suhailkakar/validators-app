@@ -42,24 +42,19 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
+      title: "Validators",
       url: "#",
       icon: IconListDetails,
     },
     {
-      title: "Analytics",
+      title: "Burn History",
       url: "#",
       icon: IconChartBar,
     },
     {
-      title: "Projects",
+      title: "Burn Details",
       url: "#",
       icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
     },
   ],
 

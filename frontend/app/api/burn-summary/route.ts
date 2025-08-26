@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BurnCalculator } from "@/lib/burnCalculator";
+import { BurnCalculator, type BurnReport } from "@/lib/burnCalculator";
 import { config } from "@/lib/config";
 
 // Cache for expensive calculations (5 minute cache)
-let cache: {
-  data: any;
+const cache: {
+  data: BurnReport | null;
   timestamp: number | null;
   ttl: number;
 } = {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // Check cache first
     if (isCacheValid()) {
-      const summary = createSummaryFromReport(cache.data);
+      const summary = createSummaryFromReport(cache.data as BurnReport);
       return NextResponse.json({
         ...summary,
         cached: true,
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function createSummaryFromReport(report: any) {
+function createSummaryFromReport(report: BurnReport) {
   // Create simplified summary
   const summary = {
     timestamp: new Date().toISOString(),
@@ -71,22 +71,29 @@ function createSummaryFromReport(report: any) {
 
     // Key metrics
     totalValidators: report.summary.totalValidators,
-    activeValidators: report.validators.filter((v: any) => v.isActive).length,
+    activeValidators: report.validators.filter((v) => v.isActive).length,
     totalBurnAmount: report.summary.totalBurnAmountTac,
     totalBurnAmountRaw: report.summary.totalBurnAmountUtac,
     totalInflationRewards: report.summary.totalRewardsTac,
     totalInflationRewardsRaw: report.summary.totalRewardsUtac,
+    accumulatedRewardsBurnt: "0",
+    accumulatedRewardsBurntRaw: "0",
+
+    // Staking distribution
+    restrictedStakePercentage: report.summary.restrictedStakePercentage || "0",
+    restrictedStakeUtac: report.summary.restrictedStakeUtac || "0",
+    totalBondedUtac: report.summary.totalBondedUtac || "0",
 
     // Top 3 validators
     topValidators: report.validators
-      .filter((v: any) => v.hasCommission)
-      .sort((a: any, b: any) => {
+      .filter((v) => v.hasCommission)
+      .sort((a, b) => {
         const aBurn = parseFloat(a.burnAmountTac.replace(/,/g, ""));
         const bBurn = parseFloat(b.burnAmountTac.replace(/,/g, ""));
         return bBurn - aBurn;
       })
       .slice(0, 3)
-      .map((v: any) => ({
+      .map((v) => ({
         moniker: v.moniker,
         burnAmount: v.burnAmountTac,
         address: v.address,
@@ -104,8 +111,8 @@ function createSummaryFromReport(report: any) {
     // Alerts count
     alerts: {
       total: report.alerts.length,
-      critical: report.alerts.filter((a: any) => a.type === "critical").length,
-      warnings: report.alerts.filter((a: any) => a.type === "warning").length,
+      critical: report.alerts.filter((a) => a.type === "critical").length,
+      warnings: report.alerts.filter((a) => a.type === "warning").length,
     },
   };
 

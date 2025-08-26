@@ -69,7 +69,6 @@ export const schema = z.object({
   moniker: z.string(),
   status: z.string(),
   isActive: z.boolean(),
-  commissionRate: z.string(),
   burnAmount: z.string(),
   totalCommission: z.string(),
   shouldBurn: z.boolean(),
@@ -170,38 +169,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       </div>
     ),
   },
-  {
-    accessorKey: "commissionRate",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-auto px-0 py-0 font-semibold group justify-start"
-        >
-          Commission Rate
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
-          )}
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="font-mono pl-0">
-        <span
-          className={
-            row.original.hasCommissionIssues ? "text-muted-foreground" : ""
-          }
-        >
-          {row.original.commissionRate}
-        </span>
-      </div>
-    ),
-  },
+
   {
     accessorKey: "totalCommission",
     header: ({ column }) => {
@@ -319,11 +287,9 @@ function ValidatorRow({ row }: { row: Row<z.infer<typeof schema>> }) {
     <TableRow data-state={row.getIsSelected() && "selected"}>
       {row.getVisibleCells().map((cell) => {
         console.log(cell.column.id);
-        const isNumber = [
-          "commissionRate",
-          "totalCommission",
-          "burnAmount",
-        ].includes(cell.column.id);
+        const isNumber = ["totalCommission", "burnAmount"].includes(
+          cell.column.id
+        );
         return (
           <TableCell key={cell.id} className={isNumber ? "pl-5" : ""}>
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -365,7 +331,6 @@ export function DataTable() {
           moniker: validator.moniker || "Unknown",
           status: validator.status,
           isActive: validator.isActive,
-          commissionRate: validator.commissionRate,
           burnAmount: validator.burnAmount,
           totalCommission: validator.totalCommission,
           shouldBurn: validator.shouldBurn,
@@ -515,7 +480,6 @@ export function DataTable() {
                 Validator: row.original.moniker,
                 Address: row.original.address,
                 Status: row.original.isActive ? "Active" : "Inactive",
-                "Commission Rate": row.original.commissionRate,
                 "Total Commission": row.original.totalCommission,
                 "Burn Amount": row.original.burnAmount,
                 "Action Required": row.original.shouldBurn
@@ -628,7 +592,6 @@ export function DataTable() {
                       Validator: row.original.moniker,
                       Address: row.original.address,
                       Status: row.original.isActive ? "Active" : "Inactive",
-                      "Commission Rate": row.original.commissionRate,
                       "Total Commission": row.original.totalCommission,
                       "Burn Amount": row.original.burnAmount,
                       "Action Required": row.original.shouldBurn
