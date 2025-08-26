@@ -92,17 +92,39 @@ export function SectionCards() {
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
       <Card>
         <CardHeader>
-          <CardDescription>Total Inflation Rewards</CardDescription>
+          <CardDescription>
+            Total Rewards to Restricted Validators
+          </CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             {formatTacAmount(data.totalInflationRewards)} <TAC_LABEL />
           </CardTitle>
-
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Outstanding + commission rewards <IconUsers className="size-4" />
+            Validator commission only (90% share){" "}
+            <IconUsers className="size-4" />
           </div>
-          <div className="text-muted-foreground">Period: {data.period}</div>
+          <div className="text-muted-foreground">
+            Since network launch (claimed + unclaimed)
+          </div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Total Inflation Rewards Minted</CardDescription>
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
+            N/A
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Network-wide inflation since genesis{" "}
+            <IconUsers className="size-4" />
+          </div>
+          <div className="text-muted-foreground">
+            Logic to be implemented later
+          </div>
         </CardFooter>
       </Card>
 
@@ -112,12 +134,6 @@ export function SectionCards() {
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             {formatTacAmount(data.accumulatedRewardsBurnt)} <TAC_LABEL />
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconFire className="size-4" />
-              From Launch
-            </Badge>
-          </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
@@ -132,63 +148,34 @@ export function SectionCards() {
 
       <Card className="@container/card">
         <CardHeader>
+          <CardDescription>Number of Restricted Validators</CardDescription>
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
+            {data.totalValidators}
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Total restricted validators in the set{" "}
+            <IconUsers className="size-4" />
+          </div>
+          <div className="text-muted-foreground">
+            All have 90% commission rate
+          </div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card">
+        <CardHeader>
           <CardDescription>% Supply Staked to Restricted</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             {parseFloat(data.restrictedStakePercentage || "0").toFixed(1)}%
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconUsers className="size-4" />
-              Network Share
-            </Badge>
-          </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
             Share of bonded stake held by restricted set
           </div>
           <div className="text-muted-foreground">Period: {data.period}</div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Total Burn Required</CardDescription>
-          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {formatTacAmount(data.totalBurnAmount)} <TAC_LABEL />
-          </CardTitle>
-
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            80% of commission rewards <IconFire className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Must be burned to burn address
-          </div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Active Restricted Validators</CardDescription>
-          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {data.activeValidators}/20
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconUsers className="size-4" />
-              {((data.activeValidators / 20) * 100).toFixed(0)}% Active
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Restricted validators operational <IconUsers className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            {data.activeValidators} of 20 validators are restricted
-          </div>
         </CardFooter>
       </Card>
     </div>

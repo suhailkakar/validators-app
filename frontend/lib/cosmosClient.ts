@@ -4,6 +4,7 @@
  */
 
 import { config } from "./config";
+import { addUtacAmounts } from "./tokenConverter";
 
 export interface ChainInfo {
   chainId: string;
@@ -132,6 +133,79 @@ export class CosmosClient {
     );
 
     return response.pool;
+  }
+
+  /**
+   * Get all withdraw_validator_commission transactions for a validator since genesis
+   */
+  async getValidatorCommissionWithdrawals(
+    validatorAddress: string
+  ): Promise<string> {
+    try {
+      // Get all withdraw_validator_commission txs for this validator
+      const response = await this.request<{
+        tx_responses: Array<{
+          tx: any;
+          tx_response: {
+            events: Array<{
+              type: string;
+              attributes: Array<{ key: string; value: string }>;
+            }>;
+          };
+        }>;
+        pagination: { next_key: string | null };
+      }>(
+        `/cosmos/tx/v1beta1/txs?events=message.action='withdraw_validator_commission'&events=validator='${validatorAddress}'&pagination.limit=1000`
+      );
+
+      let totalClaimedUtac = "0";
+
+      // Process all pages
+      let currentResponse = response;
+      while (currentResponse.tx_responses) {
+        for (const tx of currentResponse.tx_responses) {
+          // Find transfer events with utac denom
+          for (const event of tx.tx_response.events) {
+            if (event.type === "transfer") {
+              for (let i = 0; i < event.attributes.length; i++) {
+                if (
+                  event.attributes[i].key === "denom" &&
+                  event.attributes[i].value === "utac"
+                ) {
+                  // Next attribute should be amount
+                  if (
+                    i + 1 < event.attributes.length &&
+                    event.attributes[i + 1].key === "amount"
+                  ) {
+                    totalClaimedUtac = addUtacAmounts(
+                      totalClaimedUtac,
+                      event.attributes[i + 1].value
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Check if there are more pages
+        if (currentResponse.pagination.next_key) {
+          currentResponse = await this.request(
+            `/cosmos/tx/v1beta1/txs?events=message.action='withdraw_validator_commission'&events=validator='${validatorAddress}'&pagination.limit=1000&pagination.key=${currentResponse.pagination.next_key}`
+          );
+        } else {
+          break;
+        }
+      }
+
+      return totalClaimedUtac;
+    } catch (error) {
+      console.error(
+        `Failed to get commission withdrawals for ${validatorAddress}:`,
+        error
+      );
+      return "0";
+    }
   }
 
   /**

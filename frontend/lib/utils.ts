@@ -8,5 +8,10 @@ export const cn = (...inputs: ClassValue[]) => {
 export function formatTacAmount(amount: string | number): string {
   const numAmount =
     typeof amount === "string" ? parseFloat(amount.replace(/,/g, "")) : amount;
+
+  if (isNaN(numAmount)) {
+    return "0";
+  }
+
   return numAmount.toFixed(1);
 }

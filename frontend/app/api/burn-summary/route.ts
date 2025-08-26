@@ -74,8 +74,8 @@ function createSummaryFromReport(report: BurnReport) {
     activeValidators: report.validators.filter((v) => v.isActive).length,
     totalBurnAmount: report.summary.totalBurnAmountTac,
     totalBurnAmountRaw: report.summary.totalBurnAmountUtac,
-    totalInflationRewards: report.summary.totalRewardsTac,
-    totalInflationRewardsRaw: report.summary.totalRewardsUtac,
+    totalInflationRewards: report.summary.totalRewardsTac, // This is now total commission only
+    totalInflationRewardsRaw: report.summary.totalRewardsUtac, // This is now total commission only
     accumulatedRewardsBurnt: "0",
     accumulatedRewardsBurntRaw: "0",
 

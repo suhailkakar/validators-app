@@ -193,7 +193,7 @@ export class BurnCalculator {
           unclaimedCommissionTac: validator.unclaimedCommissionTac,
           claimedCommissionTac: validator.claimedCommissionTac,
           totalCommissionTac: validator.totalCommissionTac,
-          totalRewardsTac: formatTacAmount(validator.totalRewardsUtac),
+          totalRewardsTac: formatTacAmount(validator.totalCommissionUtac),
           burnAmountTac: burnCalculation.burnAmountTac,
           validatorKeepsTac: burnCalculation.validatorKeepsTac,
 
@@ -219,7 +219,7 @@ export class BurnCalculator {
           );
           totalRewardsUtac = addUtacAmounts(
             totalRewardsUtac,
-            result.totalRewardsUtac
+            validator.totalCommissionUtac
           );
           validatorsWithRewards++;
         }

@@ -31,7 +31,6 @@ export interface ValidatorDetails {
   unclaimedCommissionUtac: string;
   claimedCommissionUtac: string;
   totalCommissionUtac: string;
-  totalRewardsUtac: string;
 
   // Burn calculation
   burnAmount: string;
@@ -42,7 +41,6 @@ export interface ValidatorDetails {
   unclaimedCommissionTac: string;
   claimedCommissionTac: string;
   totalCommissionTac: string;
-  totalRewardsTac: string;
   burnAmountTac: string;
   validatorKeepsTac: string;
 
@@ -87,9 +85,11 @@ export class ValidatorService {
       this.cosmosClient.getValidatorCommission(validatorAddress),
     ]);
 
-    // For now, we'll set claimed commission to "0" since we don't have transaction service yet
-    // This can be enhanced later when we add the transaction service
-    const claimedCommission = "0";
+    // Get claimed commission since genesis from transaction history
+    const claimedCommission =
+      await this.cosmosClient.getValidatorCommissionWithdrawals(
+        validatorAddress
+      );
 
     // Process and validate the data
     return this.processValidatorData(
@@ -115,7 +115,7 @@ export class ValidatorService {
     // Process successful fetches
     for (const validatorData of batchResult.successful) {
       try {
-        const details = this.processValidatorData(
+        const details = await this.processValidatorData(
           validatorData.address,
           validatorData.validator,
           validatorData.outstandingRewards,
@@ -170,16 +170,11 @@ export class ValidatorService {
     );
     const unclaimedCommissionUtac = tacCommission?.amount || "0";
 
-    // Add claimed commission to get total commission (claimed + unclaimed)
+    // Calculate total commission (claimed + unclaimed) for reporting
+    // Note: We exclude delegator rewards (outstandingRewards) as they belong to delegators, not validators
     const totalCommissionUtac = addUtacAmounts(
       unclaimedCommissionUtac,
       claimedCommission
-    );
-
-    // Calculate total rewards (outstanding + total commission) for reporting
-    const totalRewardsUtac = addUtacAmounts(
-      outstandingRewardsUtac,
-      totalCommissionUtac
     );
 
     // Validate commission rate for restricted validators (strict enforcement)
@@ -210,7 +205,6 @@ export class ValidatorService {
       unclaimedCommissionUtac,
       claimedCommissionUtac: claimedCommission,
       totalCommissionUtac,
-      totalRewardsUtac,
 
       // Burn calculation
       burnAmount: burnCalculation.burnAmount,
@@ -221,14 +215,14 @@ export class ValidatorService {
       unclaimedCommissionTac: formatTacAmount(unclaimedCommissionUtac),
       claimedCommissionTac: formatTacAmount(claimedCommission),
       totalCommissionTac: formatTacAmount(totalCommissionUtac),
-      totalRewardsTac: formatTacAmount(totalRewardsUtac),
+
       burnAmountTac: burnCalculation.burnAmountTac,
       validatorKeepsTac: burnCalculation.validatorKeepsTac,
 
       // Validation
       commissionIssues,
       hasRewards:
-        isValidUtacAmount(totalRewardsUtac) && totalRewardsUtac !== "0",
+        isValidUtacAmount(totalCommissionUtac) && totalCommissionUtac !== "0",
       hasCommission:
         isValidUtacAmount(totalCommissionUtac) && totalCommissionUtac !== "0",
 
@@ -296,7 +290,7 @@ export class ValidatorService {
       );
       totalRewardsUtac = addUtacAmounts(
         totalRewardsUtac,
-        validator.totalRewardsUtac
+        validator.totalCommissionUtac
       );
     }
 
