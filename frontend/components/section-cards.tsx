@@ -104,15 +104,13 @@ export function SectionCards() {
             Validator commission only (90% share){" "}
             <IconUsers className="size-4" />
           </div>
-          <div className="text-muted-foreground">
-            Since network launch (claimed + unclaimed)
-          </div>
+          <div className="text-muted-foreground">Since network launch</div>
         </CardFooter>
       </Card>
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Inflation Rewards Minted</CardDescription>
+          <CardDescription>Total Rewards Minted</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             N/A
           </CardTitle>

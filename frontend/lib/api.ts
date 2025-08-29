@@ -58,6 +58,9 @@ export interface ValidatorData {
   hasRewards: boolean;
   hasCommission: boolean;
   calculatedAt: string;
+  totalAccumulatedRewards?: string;
+  totalRewardsAlreadyBurnt?: string;
+  totalRewardsToBeBurn?: string;
 }
 
 export interface ValidatorsResponse {

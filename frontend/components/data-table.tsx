@@ -70,9 +70,10 @@ export const schema = z.object({
   status: z.string(),
   isActive: z.boolean(),
   burnAmount: z.string(),
-  totalCommission: z.string(),
   shouldBurn: z.boolean(),
   hasCommissionIssues: z.boolean(),
+  totalRewardsAlreadyBurnt: z.string(),
+  totalRewardsToBeBurn: z.string(),
 });
 
 const columns: ColumnDef<z.infer<typeof schema>>[] = [
@@ -171,32 +172,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
 
   {
-    accessorKey: "totalCommission",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-auto px-0 py-0 font-semibold group justify-start"
-        >
-          Total Commission
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
-          )}
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="font-mono pl-0">
-        {formatTacAmount(row.original.totalCommission)} TAC
-      </div>
-    ),
-  },
-  {
     accessorKey: "burnAmount",
     header: ({ column }) => {
       return (
@@ -205,7 +180,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-auto px-0 py-0 font-semibold group justify-start"
         >
-          Burn Amount
+          Total Accumulated Rewards (90%)
           {column.getIsSorted() === "asc" ? (
             <IconSortAscending className="ml-2 h-4 w-4" />
           ) : column.getIsSorted() === "desc" ? (
@@ -228,6 +203,58 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
             : "0.0"}{" "}
           TAC
         </span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "totalRewardsAlreadyBurnt",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto px-0 py-0 font-semibold group justify-start"
+        >
+          Total Rewards Already Sent to Burn
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="font-mono pl-0">
+        {formatTacAmount(row.original.totalRewardsAlreadyBurnt)} TAC
+      </div>
+    ),
+  },
+  {
+    accessorKey: "totalRewardsToBeBurn",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto px-0 py-0 font-semibold group justify-start"
+        >
+          Total Rewards to be Burn
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="font-mono pl-0">
+        {formatTacAmount(row.original.totalRewardsToBeBurn)} TAC
       </div>
     ),
   },
@@ -287,9 +314,11 @@ function ValidatorRow({ row }: { row: Row<z.infer<typeof schema>> }) {
     <TableRow data-state={row.getIsSelected() && "selected"}>
       {row.getVisibleCells().map((cell) => {
         console.log(cell.column.id);
-        const isNumber = ["totalCommission", "burnAmount"].includes(
-          cell.column.id
-        );
+        const isNumber = [
+          "burnAmount",
+          "totalRewardsAlreadyBurnt",
+          "totalRewardsToBeBurn",
+        ].includes(cell.column.id);
         return (
           <TableCell key={cell.id} className={isNumber ? "pl-5" : ""}>
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -332,9 +361,10 @@ export function DataTable() {
           status: validator.status,
           isActive: validator.isActive,
           burnAmount: validator.burnAmount,
-          totalCommission: validator.totalCommission,
           shouldBurn: validator.shouldBurn,
           hasCommissionIssues: validator.hasCommissionIssues,
+          totalRewardsAlreadyBurnt: validator.totalRewardsAlreadyBurnt || "0",
+          totalRewardsToBeBurn: validator.totalRewardsToBeBurn || "0",
         }));
 
         setData(transformedData);
@@ -480,8 +510,10 @@ export function DataTable() {
                 Validator: row.original.moniker,
                 Address: row.original.address,
                 Status: row.original.isActive ? "Active" : "Inactive",
-                "Total Commission": row.original.totalCommission,
-                "Burn Amount": row.original.burnAmount,
+                "Total Accumulated Rewards (90%)": row.original.burnAmount,
+                "Total Rewards Already Sent to Burn":
+                  row.original.totalRewardsAlreadyBurnt,
+                "Total Rewards to be Burn": row.original.totalRewardsToBeBurn,
                 "Action Required": row.original.shouldBurn
                   ? "Burn Required"
                   : "No Action",
@@ -592,8 +624,12 @@ export function DataTable() {
                       Validator: row.original.moniker,
                       Address: row.original.address,
                       Status: row.original.isActive ? "Active" : "Inactive",
-                      "Total Commission": row.original.totalCommission,
-                      "Burn Amount": row.original.burnAmount,
+                      "Total Accumulated Rewards (90%)":
+                        row.original.burnAmount,
+                      "Total Rewards Already Sent to Burn":
+                        row.original.totalRewardsAlreadyBurnt,
+                      "Total Rewards to be Burn":
+                        row.original.totalRewardsToBeBurn,
                       "Action Required": row.original.shouldBurn
                         ? "Burn Required"
                         : "No Action",
