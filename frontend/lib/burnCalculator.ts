@@ -157,6 +157,15 @@ export class BurnCalculator {
 
     for (const validator of validators) {
       try {
+        // Debug: echo per-validator raw total commission before any formatting
+        console.debug(
+          "burnCalculator.validator.totalCommissionUtac",
+          JSON.stringify({
+            address: validator.address,
+            moniker: validator.moniker,
+            totalCommissionUtac: validator.totalCommissionUtac,
+          })
+        );
         // Calculate burn amounts based on total commission (claimed + unclaimed)
         const burnCalculation = calculateBurnAmount(
           validator.totalCommissionUtac,
@@ -220,6 +229,17 @@ export class BurnCalculator {
           totalRewardsUtac = addUtacAmounts(
             totalRewardsUtac,
             validator.totalCommissionUtac
+          );
+
+          // Debug: running raw sum of totalRewardsUtac (utac)
+          console.debug(
+            "burnCalculator.running.totalRewardsUtac",
+            JSON.stringify({
+              address: validator.address,
+              moniker: validator.moniker,
+              added: validator.totalCommissionUtac,
+              runningTotal: totalRewardsUtac,
+            })
           );
           validatorsWithRewards++;
         }

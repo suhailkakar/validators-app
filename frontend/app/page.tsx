@@ -1,35 +1,31 @@
-import { AppSidebar } from "@/components/app-sidebar";
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
-import { DataTable } from "@/components/data-table";
-import { SectionCards } from "@/components/section-cards";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SummaryCards } from "@/components/overview/summary-cards";
+import { DelegationVolumeChart } from "@/components/overview/delegation-volume-chart";
+import { StakingDistributionChart } from "@/components/overview/staking-distribution-chart";
+import { ValidatorInfoTable } from "@/components/overview/validator-info-table";
 
 export default function Page() {
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="floating" />
-      <SidebarInset className="p-4 ">
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <SectionCards />
-              <div className="px-4 lg:px-6">
-                <ChartAreaInteractive />
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <SummaryCards />
+
+          <div className="px-4 lg:px-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="w-full lg:w-1/4">
+                <StakingDistributionChart />
               </div>
-              <DataTable />
+              <div className="flex-1">
+                <DelegationVolumeChart />
+              </div>
             </div>
           </div>
+
+          <div className="px-4 lg:px-6">
+            <ValidatorInfoTable />
+          </div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </div>
   );
 }

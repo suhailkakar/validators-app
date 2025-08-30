@@ -19,10 +19,10 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents";
-import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import { NavDocuments } from "@/components/layout/nav-documents";
+import { NavMain } from "@/components/layout/nav-main";
+import { NavSecondary } from "@/components/layout/nav-secondary";
+import { NavUser } from "@/components/layout/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -37,28 +37,41 @@ import Image from "next/image";
 const data = {
   navMain: [
     {
-      title: "Dashboard",
+      title: "Overview",
       url: "/",
       icon: IconDashboard,
     },
     {
       title: "Validators",
-      url: "#",
+      url: "/validators",
       icon: IconListDetails,
     },
     {
-      title: "Burn History",
-      url: "#",
+      title: "Address Explorer",
+      url: "/address-explorer",
       icon: IconChartBar,
     },
     {
-      title: "Burn Details",
+      title: "Reports",
       url: "#",
       icon: IconFolder,
     },
   ],
 
   navSecondary: [
+    {
+      title: "Overview",
+      url: "/restricted-validators",
+      icon: IconDashboard,
+    },
+    {
+      title: "Burn History",
+      url: "#",
+      icon: IconListDetails,
+    },
+  ],
+
+  navTertiary: [
     {
       title: "Settings",
       url: "#",
@@ -97,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className=" w-7 h-7 rounded-sm "
               />
               <div className="grid flex-1 text-left text-md font-semibold leading-tight">
-                TAC Validator Dashboard
+                TAC Staking Dashboard
                 <span className="text-xs text-muted-foreground">v0.1.0</span>
               </div>
             </SidebarMenuButton>
@@ -105,8 +118,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={data.navMain} label="Dashboard" />
+        <NavMain items={data.navSecondary} label="Restricted Validators" />
+        <NavSecondary items={data.navTertiary} className="mt-auto" />
       </SidebarContent>
     </Sidebar>
   );

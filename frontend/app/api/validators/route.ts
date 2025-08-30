@@ -66,6 +66,11 @@ export async function GET(request: NextRequest) {
 
       // Metadata
       calculatedAt: v.fetchedAt,
+
+      // Lifetime totals for new columns (raw utac for client-side formatting)
+      totalAccumulatedRewards: v.totalCommissionUtac,
+      totalRewardsAlreadyBurnt: "0",
+      totalRewardsToBeBurn: v.burnAmount,
     }));
 
     return NextResponse.json({

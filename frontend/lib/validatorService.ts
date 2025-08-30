@@ -14,6 +14,7 @@ import {
   addUtacAmounts,
   isValidUtacAmount,
   formatTacAmount,
+  cleanDecimalString,
 } from "./tokenConverter";
 
 export interface ValidatorDetails {
@@ -162,19 +163,35 @@ export class ValidatorService {
     const tacRewards = outstandingRewards.find(
       (r) => r.denom === config.chain.tokenDenom
     );
-    const outstandingRewardsUtac = tacRewards?.amount || "0";
+    const outstandingRewardsUtac = cleanDecimalString(
+      tacRewards?.amount || "0"
+    );
 
     // Process commission (unclaimed)
     const tacCommission = commission.find(
       (c) => c.denom === config.chain.tokenDenom
     );
-    const unclaimedCommissionUtac = tacCommission?.amount || "0";
+    const unclaimedCommissionUtac = cleanDecimalString(
+      tacCommission?.amount || "0"
+    );
 
     // Calculate total commission (claimed + unclaimed) for reporting
     // Note: We exclude delegator rewards (outstandingRewards) as they belong to delegators, not validators
     const totalCommissionUtac = addUtacAmounts(
       unclaimedCommissionUtac,
-      claimedCommission
+      cleanDecimalString(claimedCommission)
+    );
+
+    // Debug: per-validator lifetime total commission (raw utac)
+    console.debug(
+      "validatorService.totalCommissionUtac",
+      JSON.stringify({
+        address,
+        moniker,
+        totalCommissionUtac,
+        unclaimedCommissionUtac,
+        claimedCommissionUtac: claimedCommission,
+      })
     );
 
     // Validate commission rate for restricted validators (strict enforcement)

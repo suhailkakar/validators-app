@@ -11,26 +11,41 @@ import {
   SidebarMenuItem,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export function NavMain({
   items,
+  label,
 }: {
   items: {
     title: string;
     url: string;
     icon?: Icon;
   }[];
+  label: string;
 }) {
+  const pathname = usePathname();
   return (
     <SidebarGroup>
       <SidebarGroupContent>
-        <SidebarGroupLabel className="-mb-1">HOME</SidebarGroupLabel>
+        <SidebarGroupLabel className="font-semibold">{label}</SidebarGroupLabel>
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
+              <SidebarMenuButton
+                tooltip={item.title}
+                asChild
+                className={cn(
+                  pathname === item.url &&
+                    "bg-sidebar-accent text-sidebar-accent-foreground"
+                )}
+              >
+                <Link href={item.url}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

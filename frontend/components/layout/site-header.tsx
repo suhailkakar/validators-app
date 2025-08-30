@@ -2,10 +2,10 @@
 
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ModeToggle } from "@/components/mode-toggle";
-import { MonthSelector } from "@/components/month-selector";
-import { RefreshButton } from "@/components/refresh-button";
-import { ExportButton } from "@/components/export-button";
+import { ModeToggle } from "@/components/layout/mode-toggle";
+import { MonthSelector } from "@/components/layout/month-selector";
+import { RefreshButton } from "@/components/layout/refresh-button";
+import { ExportButton } from "@/components/layout/export-button";
 import { usePeriod } from "@/contexts/period-context";
 
 export function SiteHeader() {

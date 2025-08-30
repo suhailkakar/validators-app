@@ -19,6 +19,12 @@ The TAC Foundation requires a monthly calculation system to determine how much e
 - Historical data: Tendermint RPC tx search or indexer APIs for convenience
 - EVM JSON-RPC is irrelevant for staking data
 
+**NEW REQUIREMENT - Main Page Dashboard:**
+
+- Add summary cards showing: Total supply staked, Inflation minted (N/A until indexer), Total delegators, Avg commission rate
+- Add two charts: 3/4 line graph (Delegation volume over time) and 1/4 pie chart (Staking distribution over validators)
+- Use demo data only for now
+
 ## Key Challenges and Analysis
 
 ### 1. Data Source Integration
@@ -109,10 +115,22 @@ The TAC Foundation requires a monthly calculation system to determine how much e
 
 ### Current Status / Progress Tracking
 
-- **Current Phase:** COMPLETE ✅ - All Requirements Implemented
+- **Current Phase:** COMPLETE ✅ - All Requirements Implemented + NEW DASHBOARD FEATURES
 - **Next Action:** Production deployment ready
 - **Blockers:** None
 - **Risk Level:** Low
+
+### NEW IMPLEMENTATION COMPLETED ✅
+
+**Main Page Dashboard Features Added:**
+
+- ✅ Summary Cards: Total supply staked, Inflation minted (N/A), Total delegators, Avg commission rate
+- ✅ Delegation Volume Chart: Line chart showing monthly delegation trends (3/4 width)
+- ✅ Staking Distribution Chart: Pie chart showing validator stake distribution (1/4 width)
+- ✅ Validator Information Table: Comprehensive table with 20 demo validators, sorting, filtering, and pagination
+- ✅ Responsive layout with proper spacing and modern UI components
+- ✅ Demo data implementation as requested
+- ✅ All components use existing UI component library for consistency
 
 ### Completed Tasks
 

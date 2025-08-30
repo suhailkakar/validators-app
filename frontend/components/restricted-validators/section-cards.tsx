@@ -1,17 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  IconAlertCircle as IconAlert,
-  IconCheck,
-  IconFiretruck as IconFire,
-  IconUsers,
-} from "@tabler/icons-react";
+import { IconFiretruck as IconFire, IconUsers } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardAction,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -21,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient, type BurnSummary } from "@/lib/api";
 import { formatTacAmount } from "@/lib/utils";
 import { usePeriod } from "@/contexts/period-context";
-import { Star } from "lucide-react";
 
 export function SectionCards() {
   const [data, setData] = useState<BurnSummary | null>(null);
@@ -90,6 +83,23 @@ export function SectionCards() {
 
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Total Rewards Minted</CardDescription>
+          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
+            N/A
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Network-wide inflation since genesis{" "}
+          </div>
+          <div className="text-muted-foreground">
+            Logic to be implemented later
+          </div>
+        </CardFooter>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardDescription>
@@ -102,27 +112,8 @@ export function SectionCards() {
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
             Validator commission only (90% share){" "}
-            <IconUsers className="size-4" />
           </div>
           <div className="text-muted-foreground">Since network launch</div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Total Rewards Minted</CardDescription>
-          <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            N/A
-          </CardTitle>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Network-wide inflation since genesis{" "}
-            <IconUsers className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Logic to be implemented later
-          </div>
         </CardFooter>
       </Card>
 
@@ -136,7 +127,6 @@ export function SectionCards() {
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
             Total rewards burnt since network launch{" "}
-            <IconFire className="size-4" />
           </div>
           <div className="text-muted-foreground">
             Currently 0 (no burns executed)
@@ -146,19 +136,16 @@ export function SectionCards() {
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Number of Restricted Validators</CardDescription>
+          <CardDescription>80% of Total Accumulated Rewards</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {data.totalValidators}
+            {formatTacAmount(data.totalBurnAmount)} <TAC_LABEL />
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Total restricted validators in the set{" "}
-            <IconUsers className="size-4" />
+            Burn obligation (80% of lifetime 90% commission)
           </div>
-          <div className="text-muted-foreground">
-            All have 90% commission rate
-          </div>
+          <div className="text-muted-foreground">Since network launch</div>
         </CardFooter>
       </Card>
 

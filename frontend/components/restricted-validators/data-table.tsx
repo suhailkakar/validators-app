@@ -74,6 +74,7 @@ export const schema = z.object({
   hasCommissionIssues: z.boolean(),
   totalRewardsAlreadyBurnt: z.string(),
   totalRewardsToBeBurn: z.string(),
+  totalAccumulatedRewards: z.string(),
 });
 
 const columns: ColumnDef<z.infer<typeof schema>>[] = [
@@ -172,7 +173,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
 
   {
-    accessorKey: "burnAmount",
+    accessorKey: "totalAccumulatedRewards",
     header: ({ column }) => {
       return (
         <Button
@@ -193,16 +194,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     },
     cell: ({ row }) => (
       <div className="font-mono pl-0">
-        <span
-          className={
-            row.original.shouldBurn ? "font-semibold" : "text-muted-foreground"
-          }
-        >
-          {row.original.shouldBurn
-            ? formatTacAmount(row.original.burnAmount)
-            : "0.0"}{" "}
-          TAC
-        </span>
+        {formatTacAmount(row.original.totalAccumulatedRewards)} TAC
       </div>
     ),
   },
@@ -315,7 +307,7 @@ function ValidatorRow({ row }: { row: Row<z.infer<typeof schema>> }) {
       {row.getVisibleCells().map((cell) => {
         console.log(cell.column.id);
         const isNumber = [
-          "burnAmount",
+          "totalAccumulatedRewards",
           "totalRewardsAlreadyBurnt",
           "totalRewardsToBeBurn",
         ].includes(cell.column.id);
@@ -365,6 +357,7 @@ export function DataTable() {
           hasCommissionIssues: validator.hasCommissionIssues,
           totalRewardsAlreadyBurnt: validator.totalRewardsAlreadyBurnt || "0",
           totalRewardsToBeBurn: validator.totalRewardsToBeBurn || "0",
+          totalAccumulatedRewards: validator.totalAccumulatedRewards || "0",
         }));
 
         setData(transformedData);
@@ -510,7 +503,8 @@ export function DataTable() {
                 Validator: row.original.moniker,
                 Address: row.original.address,
                 Status: row.original.isActive ? "Active" : "Inactive",
-                "Total Accumulated Rewards (90%)": row.original.burnAmount,
+                "Total Accumulated Rewards (90%)":
+                  row.original.totalAccumulatedRewards,
                 "Total Rewards Already Sent to Burn":
                   row.original.totalRewardsAlreadyBurnt,
                 "Total Rewards to be Burn": row.original.totalRewardsToBeBurn,
@@ -625,7 +619,7 @@ export function DataTable() {
                       Address: row.original.address,
                       Status: row.original.isActive ? "Active" : "Inactive",
                       "Total Accumulated Rewards (90%)":
-                        row.original.burnAmount,
+                        row.original.totalAccumulatedRewards,
                       "Total Rewards Already Sent to Burn":
                         row.original.totalRewardsAlreadyBurnt,
                       "Total Rewards to be Burn":

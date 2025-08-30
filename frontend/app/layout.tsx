@@ -4,6 +4,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PeriodProvider } from "@/contexts/period-context";
 import { Toaster } from "react-hot-toast";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SiteHeader } from "@/components/layout/site-header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +41,20 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <PeriodProvider>
-            {children}
+            <SidebarProvider
+              style={
+                {
+                  "--sidebar-width": "calc(var(--spacing) * 72)",
+                  "--header-height": "calc(var(--spacing) * 12)",
+                } as React.CSSProperties
+              }
+            >
+              <AppSidebar variant="floating" />
+              <SidebarInset className="p-4 ">
+                <SiteHeader />
+                {children}
+              </SidebarInset>
+            </SidebarProvider>
             <Toaster />
           </PeriodProvider>
         </ThemeProvider>
