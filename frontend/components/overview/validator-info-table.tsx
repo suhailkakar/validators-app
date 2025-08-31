@@ -512,7 +512,7 @@ export function ValidatorInfoTable() {
       defaultValue="validators"
       className="w-full flex-col justify-start gap-6"
     >
-      <div className="flex items-center justify-between px-4 lg:px-6">
+      <div className="flex items-center justify-between ">
         <Label htmlFor="view-selector" className="sr-only">
           View
         </Label>
@@ -538,7 +538,7 @@ export function ValidatorInfoTable() {
         </TabsList>
       </div>
       <TabsContent value="validators">
-        <div className="hidden @4xl/main:flex items-center justify-end gap-3 -mt-15 mr-6 mb-5">
+        <div className="hidden @4xl/main:flex items-center justify-end gap-3 -mt-15  mb-5">
           <div className="relative">
             <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -694,9 +694,9 @@ export function ValidatorInfoTable() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-lg border mx-4 lg:mx-6">
+        <div className="overflow-hidden rounded-md p-1 border ">
           <Table>
-            <TableHeader className="bg-muted sticky top-0 z-10">
+            <TableHeader className=" sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
@@ -732,7 +732,7 @@ export function ValidatorInfoTable() {
             </TableBody>
           </Table>
         </div>
-        <div className="flex items-center justify-between px-6 mt-4">
+        <div className="flex items-center justify-between  mt-4">
           <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
@@ -810,13 +810,13 @@ export function ValidatorInfoTable() {
           </div>
         </div>
       </TabsContent>
-      <TabsContent value="performance" className="flex flex-col px-4 lg:px-6">
+      <TabsContent value="performance" className="flex flex-col ">
         <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
       </TabsContent>
-      <TabsContent value="analytics" className="flex flex-col px-4 lg:px-6">
+      <TabsContent value="analytics" className="flex flex-col ">
         <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
       </TabsContent>
-      <TabsContent value="settings" className="flex flex-col px-4 lg:px-6">
+      <TabsContent value="settings" className="flex flex-col ">
         <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
       </TabsContent>
     </Tabs>

@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { WalletDashboard } from "@/components/wallet-dashboard/wallet-dashboard";
+import WalletDashboard from "@/components/wallet-dashboard/wallet-dashboard";
 
 export default function AddressExplorer() {
   const router = useRouter();
@@ -100,21 +100,13 @@ export default function AddressExplorer() {
                   Please enter a wallet address to explore its details.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="address" className="text-right">
-                    Address
-                  </Label>
-                  <Input
-                    id="address"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Enter wallet address..."
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
+              <Input
+                id="address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter wallet address..."
+              />
               <DialogFooter>
                 <Button onClick={handleContinue} disabled={!address.trim()}>
                   Continue

@@ -34,6 +34,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <script src="https://widgets.coingecko.com/gecko-coin-price-chart-widget.js"></script>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -1,42 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { IconSearch, IconDownload, IconCalendar } from "@tabler/icons-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { IconDownload, IconCalendar, IconSearch } from "@tabler/icons-react";
 import { WalletSummaryCards } from "./wallet-summary-cards";
 import { DelegationsPanel } from "./delegations-panel";
 import { RewardsPanel } from "./rewards-panel";
 import { UnbondingsPanel } from "./unbondings-panel";
 import { ActivityTimeline } from "./activity-timeline";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface WalletDashboardProps {
   address: string;
   onAddressChange: (newAddress: string) => void;
 }
 
-export function WalletDashboard({
+export default function WalletDashboard({
   address,
   onAddressChange,
 }: WalletDashboardProps) {
-  const [activeTab, setActiveTab] = useState("delegations");
-  const [dateRange, setDateRange] = useState("30d");
-  const [selectedValidators, setSelectedValidators] = useState<string[]>([]);
-  const [eventType, setEventType] = useState("all");
-  const [newAddress, setNewAddress] = useState("");
-
   const handleExploreNewAddress = () => {
-    if (newAddress.trim()) {
-      onAddressChange(newAddress.trim());
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleExploreNewAddress();
-    }
+    // This function will be implemented later to allow users to explore new addresses
+    console.log("Explore new address clicked");
   };
 
   return (
@@ -45,43 +36,27 @@ export function WalletDashboard({
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           {/* Address Bar */}
           <div className="px-4 lg:px-6">
-            <Card>
+            <Card className="bg-primary/5">
               <CardHeader>
-                <CardTitle className="text-lg">Wallet Address</CardTitle>
+                <CardTitle>Wallet Address</CardTitle>
+                <CardDescription>
+                  Current wallet address being explored
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <Input
-                        value={address}
-                        readOnly
-                        className="font-mono bg-muted"
-                      />
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onAddressChange("")}
-                    >
-                      Change
-                    </Button>
+                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 -mt-3">
+                  <div className="flex-1">
+                    <Input
+                      value={address}
+                      readOnly
+                      className="font-mono bg-white"
+                      placeholder="Wallet address"
+                    />
                   </div>
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Enter new wallet address to explore..."
-                        value={newAddress}
-                        onChange={(e) => setNewAddress(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        className="font-mono"
-                      />
-                    </div>
-                    <Button variant="outline" onClick={handleExploreNewAddress}>
-                      <IconSearch className="h-4 w-4 mr-2" />
-                      Explore
-                    </Button>
-                  </div>
+                  <Button onClick={handleExploreNewAddress} variant="outline">
+                    <IconSearch className="h-4 w-4 mr-2" />
+                    Explore Another Address
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -90,38 +65,215 @@ export function WalletDashboard({
           {/* Summary Cards */}
           <WalletSummaryCards />
 
-          {/* Main Dashboard Content */}
+          {/* Charts Section */}
           <div className="px-4 lg:px-6">
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="space-y-6"
-            >
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="delegations">Delegations</TabsTrigger>
-                <TabsTrigger value="rewards">Rewards</TabsTrigger>
-                <TabsTrigger value="unbondings">Unbondings</TabsTrigger>
-                <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                <TabsTrigger value="reports">Reports</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="delegations">
-                <DelegationsPanel />
-              </TabsContent>
-
-              <TabsContent value="rewards">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Rewards Line Chart - 4/5 width */}
+              <div className="flex-1">
                 <RewardsPanel />
-              </TabsContent>
+              </div>
+              {/* Delegation Pie Chart - 1/5 width */}
+              <div className="w-full lg:w-1/5">
+                <DelegationsPanel />
+              </div>
+            </div>
+          </div>
 
-              <TabsContent value="unbondings">
-                <UnbondingsPanel />
-              </TabsContent>
+          {/* First Row of Tables - Side by Side */}
+          <div className="px-4 lg:px-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Rewards Breakdown Table */}
+              <div className="flex-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <IconDownload className="h-5 w-5" />
+                      Rewards Breakdown
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">
+                        Rewards by Validator
+                      </h3>
+                      <div className="border rounded-lg">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-3 font-medium">
+                                Validator
+                              </th>
+                              <th className="text-left p-3 font-medium">
+                                Lifetime
+                              </th>
+                              <th className="text-left p-3 font-medium">
+                                Claimed
+                              </th>
+                              <th className="text-left p-3 font-medium">
+                                Unclaimed
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b">
+                              <td className="p-3">Cosmos Validator</td>
+                              <td className="p-3 font-mono">5,200 TAC</td>
+                              <td className="p-3 font-mono text-green-600">
+                                4,750 TAC
+                              </td>
+                              <td className="p-3 font-mono text-orange-600">
+                                450 TAC
+                              </td>
+                            </tr>
+                            <tr className="border-b">
+                              <td className="p-3">StakeLab</td>
+                              <td className="p-3 font-mono">4,100 TAC</td>
+                              <td className="p-3 font-mono text-green-600">
+                                3,740 TAC
+                              </td>
+                              <td className="p-3 font-mono text-orange-600">
+                                360 TAC
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="p-3">Validator One</td>
+                              <td className="p-3 font-mono">3,800 TAC</td>
+                              <td className="p-3 font-mono text-green-600">
+                                3,560 TAC
+                              </td>
+                              <td className="p-3 font-mono text-orange-600">
+                                240 TAC
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-              <TabsContent value="timeline">
-                <ActivityTimeline />
-              </TabsContent>
+              {/* Delegation Details Table */}
+              <div className="flex-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <IconDownload className="h-5 w-5" />
+                      Delegation Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">
+                        Stake Distribution
+                      </h3>
+                      <div className="border rounded-lg">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-3 font-medium">
+                                Validator
+                              </th>
+                              <th className="text-left p-3 font-medium">
+                                Amount
+                              </th>
+                              <th className="text-left p-3 font-medium">
+                                First Date
+                              </th>
+                              <th className="text-left p-3 font-medium">
+                                Commission
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b">
+                              <td className="p-3">Cosmos Validator</td>
+                              <td className="p-3 font-mono">15,000 TAC</td>
+                              <td className="p-3">2024-01-15</td>
+                              <td className="p-3">10.0%</td>
+                            </tr>
+                            <tr className="border-b">
+                              <td className="p-3">StakeLab</td>
+                              <td className="p-3 font-mono">12,000 TAC</td>
+                              <td className="p-3">2024-01-20</td>
+                              <td className="p-3">8.5%</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3">Validator One</td>
+                              <td className="p-3 font-mono">8,000 TAC</td>
+                              <td className="p-3">2024-02-01</td>
+                              <td className="p-3">12.0%</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
 
-              <TabsContent value="reports">
+          {/* Second Row of Tables - Side by Side */}
+          <div className="px-4 lg:px-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Timeline Table */}
+              <div className="flex-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <IconCalendar className="h-5 w-5" />
+                      Activity Timeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">
+                        Recent Activities
+                      </h3>
+                      <div className="border rounded-lg">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-3 font-medium">
+                                Action
+                              </th>
+                              <th className="text-left p-3 font-medium">
+                                Details
+                              </th>
+                              <th className="text-left p-3 font-medium">
+                                Date
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b">
+                              <td className="p-3">Staked</td>
+                              <td className="p-3">10,000 TAC → Validator X</td>
+                              <td className="p-3">2024-03-20</td>
+                            </tr>
+                            <tr className="border-b">
+                              <td className="p-3">Claimed</td>
+                              <td className="p-3">200 TAC rewards</td>
+                              <td className="p-3">2024-03-18</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3">Unbonded</td>
+                              <td className="p-3">
+                                1,000 TAC (release 12 Sep)
+                              </td>
+                              <td className="p-3">2024-03-15</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Reports Table */}
+              <div className="flex-1">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -129,100 +281,38 @@ export function WalletDashboard({
                       Reports & Export
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Date Range
-                        </label>
-                        <select
-                          value={dateRange}
-                          onChange={(e) => setDateRange(e.target.value)}
-                          className="w-full p-2 border rounded-md"
-                        >
-                          <option value="7d">Last 7 days</option>
-                          <option value="30d">Last 30 days</option>
-                          <option value="90d">Last 90 days</option>
-                          <option value="1y">Last year</option>
-                          <option value="all">All time</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Validators
-                        </label>
-                        <select
-                          multiple
-                          value={selectedValidators}
-                          onChange={(e) =>
-                            setSelectedValidators(
-                              Array.from(
-                                e.target.selectedOptions,
-                                (option) => option.value
-                              )
-                            )
-                          }
-                          className="w-full p-2 border rounded-md"
-                        >
-                          <option value="all">All Validators</option>
-                          <option value="cosmos1abc">Cosmos Validator</option>
-                          <option value="cosmos1def">StakeLab</option>
-                          <option value="cosmos1ghi">Validator One</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Event Type
-                        </label>
-                        <select
-                          value={eventType}
-                          onChange={(e) => setEventType(e.target.value)}
-                          className="w-full p-2 border rounded-md"
-                        >
-                          <option value="all">All Events</option>
-                          <option value="stake">Stake</option>
-                          <option value="claim">Claim</option>
-                          <option value="unbond">Unbond</option>
-                          <option value="restake">Restake</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-                      <Button variant="outline" className="gap-2">
-                        <IconDownload className="h-4 w-4" />
-                        Export CSV
-                      </Button>
-                      <Button variant="outline" className="gap-2">
-                        <IconDownload className="h-4 w-4" />
-                        Export Excel
-                      </Button>
-                      <Button variant="outline" className="gap-2">
-                        <IconDownload className="h-4 w-4" />
-                        Export JSON
-                      </Button>
-                    </div>
-
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">Monthly Auto-Export</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Automatically export your wallet data every month
-                          </p>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Export Options</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <h4 className="font-medium">Monthly Auto-Export</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Automatically export wallet data
+                            </p>
+                          </div>
+                          <button className="px-3 py-1 text-sm border rounded hover:bg-muted">
+                            Schedule
+                          </button>
                         </div>
-                        <Button variant="outline" size="sm">
-                          <IconCalendar className="h-4 w-4 mr-2" />
-                          Schedule
-                        </Button>
+                        <div className="flex gap-2">
+                          <button className="px-3 py-2 text-sm border rounded hover:bg-muted">
+                            Export CSV
+                          </button>
+                          <button className="px-3 py-2 text-sm border rounded hover:bg-muted">
+                            Export Excel
+                          </button>
+                          <button className="px-3 py-2 text-sm border rounded hover:bg-muted">
+                            Export JSON
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </div>
         </div>
       </div>
