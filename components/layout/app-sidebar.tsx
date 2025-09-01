@@ -61,7 +61,7 @@ const data = {
   navSecondary: [
     {
       title: "Overview",
-      url: "/restricted-validators",
+      url: "/",
       icon: IconDashboard,
     },
     {
