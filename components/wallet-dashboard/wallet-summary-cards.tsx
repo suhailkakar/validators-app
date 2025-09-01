@@ -13,7 +13,7 @@ import { SummaryCard } from "@/components/ui/summary-card";
 
 export function WalletSummaryCards() {
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-transparent dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
+    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-transparent dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4  @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
       <SummaryCard
         icon={<IconCoins className="h-4 w-4" />}
         title="Wallet Balance"

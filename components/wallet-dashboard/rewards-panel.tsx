@@ -23,6 +23,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { IconTrendingUp } from "@tabler/icons-react";
 
 export const description = "Rewards over time area chart";
 
@@ -60,7 +61,10 @@ export function RewardsPanel() {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Rewards Over Time</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <IconTrendingUp className="h-5 w-5" />
+          Rewards Over Time
+        </CardTitle>
         <CardDescription>
           Monthly rewards accumulation trends (Demo Data)
         </CardDescription>

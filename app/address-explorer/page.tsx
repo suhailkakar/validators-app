@@ -93,7 +93,7 @@ export default function AddressExplorer() {
 
           {/* Address Input Modal */}
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Enter Wallet Address</DialogTitle>
                 <DialogDescription>

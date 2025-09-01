@@ -118,7 +118,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} label="Dashboard" />
+        {/* <NavMain items={data.navMain} label="Dashboard" /> */}
         <NavMain items={data.navSecondary} label="Restricted Validators" />
         <NavSecondary items={data.navTertiary} className="mt-auto" />
       </SidebarContent>
