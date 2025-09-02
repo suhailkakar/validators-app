@@ -59,7 +59,7 @@ export const config = {
   business: {
     validatorCommissionRate: 0.9, // 90% commission rate
     validatorKeepRate: 0.1, // 10% of commission stays with validator
-    burnRate: 0.8, // 80% of commission must be burned
+    burnRate: 8/9, // 88.888889% of commission must be burned (equals 80% of total staking rewards)
   },
 
   // Burn address (from environment)

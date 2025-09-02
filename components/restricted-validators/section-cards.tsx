@@ -136,14 +136,14 @@ export function SectionCards() {
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>80% of Total Accumulated Rewards</CardDescription>
+          <CardDescription>80% of Total Staking Rewards</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             {formatTacAmount(data.totalBurnAmount)} <TAC_LABEL />
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Burn obligation (80% of lifetime 90% commission)
+            Burn obligation (80% of total staking rewards)
           </div>
           <div className="text-muted-foreground">Since network launch</div>
         </CardFooter>

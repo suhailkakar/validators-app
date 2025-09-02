@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/card";
 import { IconTrendingUp } from "@tabler/icons-react";
 import { useEffect } from "react";
+import { useTheme } from "next-themes";
 
 export function TacPriceChart() {
   useEffect(() => {
     const injectShadowStyles = () => {
-      // Find the gecko widget element (the host)
       const hostElement = document.querySelector(
         "gecko-coin-price-chart-widget"
       );
@@ -41,23 +41,18 @@ export function TacPriceChart() {
           }
         `;
 
-        // Create SVG gradient definition - wait for chart to fully load
         const svg = hostElement.shadowRoot.querySelector("svg");
         if (svg) {
-          // Find existing defs or create one carefully
           let defs = svg.querySelector("defs");
           if (!defs) {
             defs = document.createElementNS(
               "http://www.w3.org/2000/svg",
               "defs"
             );
-            // Append to end to avoid disrupting existing structure
             svg.appendChild(defs);
           }
 
-          // Only add gradient if it doesn't exist
           if (!defs.querySelector("#purpleGradient")) {
-            // Create linear gradient
             const gradient = document.createElementNS(
               "http://www.w3.org/2000/svg",
               "linearGradient"
@@ -68,7 +63,6 @@ export function TacPriceChart() {
             gradient.setAttribute("x2", "0%");
             gradient.setAttribute("y2", "100%");
 
-            // Purple to transparent stops
             const stop1 = document.createElementNS(
               "http://www.w3.org/2000/svg",
               "stop"
@@ -99,9 +93,11 @@ export function TacPriceChart() {
       }
     };
 
-    // Try multiple times with increasing delays
     setTimeout(injectShadowStyles, 100);
   }, []);
+
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
     <Card className="h-96">
@@ -121,6 +117,7 @@ export function TacPriceChart() {
           transparent-background="true"
           coin-id="tac"
           initial-currency="usd"
+          dark-mode={isDark ? "true" : "false"}
           width="0"
         >
           {/* @ts-expect-error gecko-coin-price-chart-widget is not a valid element */}
