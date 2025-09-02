@@ -13,11 +13,10 @@ const PeriodContext = createContext<PeriodContextType | undefined>(undefined);
 
 export function PeriodProvider({ children }: { children: React.ReactNode }) {
   // Default to current month
+  // Default to August of the current year
   const getCurrentMonth = () => {
     const now = new Date();
-    return `${now.getFullYear()}-${(now.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}`;
+    return `${now.getFullYear()}-08`;
   };
 
   const [selectedPeriod, setSelectedPeriod] = useState(getCurrentMonth());

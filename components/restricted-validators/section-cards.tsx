@@ -143,7 +143,7 @@ export function SectionCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Burn obligation (80% of total staking rewards)
+            Burn obligation
           </div>
           <div className="text-muted-foreground">Since network launch</div>
         </CardFooter>
@@ -158,7 +158,7 @@ export function SectionCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Share of bonded stake held by restricted set
+            Bonded stake held by restricted set
           </div>
           <div className="text-muted-foreground">Period: {data.period}</div>
         </CardFooter>
