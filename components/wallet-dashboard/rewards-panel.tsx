@@ -48,11 +48,11 @@ const chartConfig = {
 // Helper function to format large numbers as M/K
 const formatLargeNumber = (value: number) => {
   if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
+    return `${(Math.ceil((value / 1000000) * 10) / 10).toFixed(1)}M`;
   } else if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`;
+    return `${(Math.ceil((value / 1000) * 10) / 10).toFixed(1)}K`;
   }
-  return value.toString();
+  return Math.ceil(value).toString();
 };
 
 export function RewardsPanel() {

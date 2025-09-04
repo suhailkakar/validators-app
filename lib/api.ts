@@ -146,6 +146,10 @@ class ApiClient {
 
     return response.json();
   }
+
+  async getBlockHeight(): Promise<{ height: string; timestamp: string; cached?: boolean; cacheAge?: number }> {
+    return this.request<{ height: string; timestamp: string; cached?: boolean; cacheAge?: number }>("/api/block-height");
+  }
 }
 
 export const apiClient = new ApiClient();

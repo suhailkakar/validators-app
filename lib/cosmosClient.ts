@@ -114,6 +114,13 @@ export class CosmosClient {
   }
 
   /**
+   * Get the latest block information
+   */
+  async getLatestBlock(): Promise<any> {
+    return this.request<any>("/cosmos/base/tendermint/v1beta1/blocks/latest");
+  }
+
+  /**
    * Get specific validator by address
    */
   async getValidator(validatorAddress: string): Promise<ValidatorInfo> {

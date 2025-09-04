@@ -153,7 +153,7 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>% Supply Staked to Restricted</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {parseFloat(data.restrictedStakePercentage || "0").toFixed(1)}%
+            {Math.ceil(parseFloat(data.restrictedStakePercentage || "0"))}%
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">

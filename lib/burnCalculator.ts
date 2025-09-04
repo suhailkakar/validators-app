@@ -373,7 +373,7 @@ export class BurnCalculator {
           .map((v) => ({
             moniker: v.moniker,
             address: v.address,
-            currentRate: `${(v.commissionRate * 100).toFixed(1)}%`,
+            currentRate: `${Math.ceil(v.commissionRate * 100)}%`,
           })),
       });
     }

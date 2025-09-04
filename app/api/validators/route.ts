@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       isActive: v.isActive,
 
       // Commission info
-      commissionRate: `${(v.commissionRate * 100).toFixed(1)}%`,
+      commissionRate: `${Math.ceil(v.commissionRate * 100)}%`,
       commissionRateRaw: v.commissionRate,
       hasCommissionIssues: v.commissionIssues.length > 0,
 

@@ -328,20 +328,18 @@ export class ValidatorService {
       totalValidatorKeepsTac: formatTacAmount(totalValidatorKeepsUtac),
       totalRewardsTac: formatTacAmount(totalRewardsUtac),
 
-      // Percentages
+      // Percentages (rounded up to whole numbers)
       activePercentage:
         totalValidators > 0
-          ? ((activeValidators / totalValidators) * 100).toFixed(1)
+          ? Math.ceil((activeValidators / totalValidators) * 100).toString()
           : "0",
       rewardsPercentage:
         totalValidators > 0
-          ? ((validatorsWithRewards / totalValidators) * 100).toFixed(1)
+          ? Math.ceil((validatorsWithRewards / totalValidators) * 100).toString()
           : "0",
       commissionIssuesPercentage:
         totalValidators > 0
-          ? ((validatorsWithCommissionIssues / totalValidators) * 100).toFixed(
-              1
-            )
+          ? Math.ceil((validatorsWithCommissionIssues / totalValidators) * 100).toString()
           : "0",
     };
   }

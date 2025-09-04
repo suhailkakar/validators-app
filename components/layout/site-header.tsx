@@ -6,6 +6,7 @@ import { ModeToggle } from "@/components/layout/mode-toggle";
 import { MonthSelector } from "@/components/layout/month-selector";
 import { RefreshButton } from "@/components/layout/refresh-button";
 import { ExportButton } from "@/components/layout/export-button";
+import { BlockHeight } from "@/components/layout/block-height";
 import { Input } from "@/components/ui/input";
 import { IconSearch } from "@tabler/icons-react";
 import { usePeriod } from "@/contexts/period-context";
@@ -23,6 +24,11 @@ export function SiteHeader() {
         />
         <h1 className="text-base font-medium">TAC Validator Dashboard</h1>
         <div className="ml-auto flex items-center gap-2">
+          <BlockHeight />
+          <Separator
+            orientation="vertical"
+            className="mx-1 data-[orientation=vertical]:h-4"
+          />
           <div className="relative">
             <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="Search..." className="w-64 pl-9" />

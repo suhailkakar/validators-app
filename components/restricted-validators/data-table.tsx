@@ -148,7 +148,9 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
             <IconSortAscending className="ml-2 h-4 w-4" />
           ) : column.getIsSorted() === "desc" ? (
             <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : null}
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
         </Button>
       );
     },
@@ -157,6 +159,12 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       if (value === "inactive") return !row.original.isActive;
       if (value === "issues") return row.original.hasCommissionIssues;
       return true;
+    },
+    sortingFn: (rowA, rowB) => {
+      // Active validators should come first (1 > 0)
+      const aVal = rowA.original.isActive ? 1 : 0;
+      const bVal = rowB.original.isActive ? 1 : 0;
+      return bVal - aVal; // Descending order for Active first
     },
     cell: ({ row }) => (
       <div className="flex flex-col gap-1">
@@ -197,6 +205,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         {formatTacAmount(row.original.totalAccumulatedRewards)} TAC
       </div>
     ),
+    sortingFn: (rowA, rowB, columnId) => {
+      const aVal = parseFloat((rowA.original[columnId] as string).replace(/,/g, "") || "0");
+      const bVal = parseFloat((rowB.original[columnId] as string).replace(/,/g, "") || "0");
+      return aVal - bVal;
+    },
   },
   {
     accessorKey: "totalRewardsAlreadyBurnt",
@@ -223,6 +236,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         {formatTacAmount(row.original.totalRewardsAlreadyBurnt)} TAC
       </div>
     ),
+    sortingFn: (rowA, rowB, columnId) => {
+      const aVal = parseFloat((rowA.original[columnId] as string).replace(/,/g, "") || "0");
+      const bVal = parseFloat((rowB.original[columnId] as string).replace(/,/g, "") || "0");
+      return aVal - bVal;
+    },
   },
   {
     accessorKey: "totalRewardsToBeBurn",
@@ -249,6 +267,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         {formatTacAmount(row.original.totalRewardsToBeBurn)} TAC
       </div>
     ),
+    sortingFn: (rowA, rowB, columnId) => {
+      const aVal = parseFloat((rowA.original[columnId] as string).replace(/,/g, "") || "0");
+      const bVal = parseFloat((rowB.original[columnId] as string).replace(/,/g, "") || "0");
+      return aVal - bVal;
+    },
   },
   {
     accessorKey: "shouldBurn",
@@ -264,7 +287,9 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
             <IconSortAscending className="ml-2 h-4 w-4" />
           ) : column.getIsSorted() === "desc" ? (
             <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : null}
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
         </Button>
       );
     },
@@ -273,6 +298,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         {row.original.shouldBurn ? "Burn Required" : "No Action"}
       </Badge>
     ),
+    sortingFn: (rowA, rowB) => {
+      const aVal = rowA.original.shouldBurn ? 1 : 0;
+      const bVal = rowB.original.shouldBurn ? 1 : 0;
+      return aVal - bVal;
+    },
   },
   {
     id: "actions",

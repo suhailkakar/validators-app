@@ -121,14 +121,14 @@ export function utacToTac(utacAmount: string): string {
 }
 
 /**
- * Format TAC amount for display
+ * Format TAC amount for display with rounding up to whole numbers
  * @param {string} utacAmount - Amount in utac (base units)
- * @param {number} precision - Decimal places to show (default: 6)
- * @returns {string} Formatted TAC amount with proper precision
+ * @param {number} precision - Decimal places to show (default: 0 for whole numbers)
+ * @returns {string} Formatted TAC amount as whole number (rounded up)
  */
 export function formatTacAmount(
   utacAmount: string,
-  precision: number = 6
+  precision: number = 0
 ): string {
   const cleanAmount = cleanDecimalString(utacAmount);
   if (cleanAmount === "0") return "0";
@@ -140,17 +140,44 @@ export function formatTacAmount(
     const integerPart = bigIntAmount / divisor;
     const fractionalPart = bigIntAmount % divisor;
 
-    // Pad fractional part to 18 digits
+    // If precision is 0, just round up to whole number
+    if (precision === 0) {
+      let finalInteger = integerPart;
+      // If there are any fractional digits, round up
+      if (fractionalPart > 0n) {
+        finalInteger = integerPart + BigInt(1);
+      }
+      
+      // Format with commas
+      return finalInteger
+        .toString()
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // For non-zero precision (fallback for other uses)
     const fractionalStr = fractionalPart.toString().padStart(18, "0");
-
-    // Truncate to desired precision
     const truncatedFractional = fractionalStr.substring(0, precision);
+    const remainingDigits = fractionalStr.substring(precision);
+    
+    const hasRemainingDigits = remainingDigits && remainingDigits !== "0".repeat(remainingDigits.length);
+    
+    let finalInteger = integerPart;
+    let finalFractional = truncatedFractional;
+    
+    if (hasRemainingDigits) {
+      const fractionalValue = BigInt(truncatedFractional || "0") + BigInt(1);
+      const maxFractional = BigInt(10 ** precision);
+      
+      if (fractionalValue >= maxFractional) {
+        finalInteger = integerPart + BigInt(1);
+        finalFractional = "0".repeat(precision);
+      } else {
+        finalFractional = fractionalValue.toString().padStart(precision, "0");
+      }
+    }
 
-    // Remove trailing zeros
-    const trimmedFractional = truncatedFractional.replace(/0+$/, "");
-
-    // Format integer part with commas
-    const formattedInteger = integerPart
+    const trimmedFractional = finalFractional.replace(/0+$/, "");
+    const formattedInteger = finalInteger
       .toString()
       .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
