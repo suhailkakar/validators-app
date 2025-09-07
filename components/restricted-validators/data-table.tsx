@@ -8,7 +8,6 @@ import {
   IconChevronsRight,
   IconDotsVertical,
   IconSearch,
-  IconFilter,
   IconDownload,
   IconSortAscending,
   IconSortDescending,
@@ -29,7 +28,6 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import { Badge } from "@/components/ui/badge";
@@ -69,12 +67,12 @@ export const schema = z.object({
   moniker: z.string(),
   status: z.string(),
   isActive: z.boolean(),
-  burnAmount: z.string(),
-  shouldBurn: z.boolean(),
-  hasCommissionIssues: z.boolean(),
+  totalAccumulatedRewards: z.string(),
+  claimedRewards: z.string(),
+  unclaimedRewards: z.string(),
   totalRewardsAlreadyBurnt: z.string(),
   totalRewardsToBeBurn: z.string(),
-  totalAccumulatedRewards: z.string(),
+  totalAmountDelegated: z.string(),
 });
 
 const columns: ColumnDef<z.infer<typeof schema>>[] = [
@@ -125,7 +123,12 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex flex-col">
-          <span className="font-medium">{row.original.moniker}</span>
+          <span
+            className="font-medium truncate max-w-[200px]"
+            title={row.original.moniker}
+          >
+            {row.original.moniker}
+          </span>
           <span className="text-xs text-muted-foreground font-mono">
             {row.original.address.slice(0, 20)}...
           </span>
@@ -133,51 +136,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     enableHiding: false,
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-auto p-0 font-semibold"
-        >
-          Status
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
-          )}
-        </Button>
-      );
-    },
-    filterFn: (row, id, value) => {
-      if (value === "active") return row.original.isActive;
-      if (value === "inactive") return !row.original.isActive;
-      if (value === "issues") return row.original.hasCommissionIssues;
-      return true;
-    },
-    sortingFn: (rowA, rowB) => {
-      // Active validators should come first (1 > 0)
-      const aVal = rowA.original.isActive ? 1 : 0;
-      const bVal = rowB.original.isActive ? 1 : 0;
-      return bVal - aVal; // Descending order for Active first
-    },
-    cell: ({ row }) => (
-      <div className="flex flex-col gap-1">
-        <Badge variant={row.original.isActive ? "default" : "secondary"}>
-          {row.original.isActive ? "Active" : "Inactive"}
-        </Badge>
-        {row.original.hasCommissionIssues && (
-          <Badge variant="outline" className="text-xs">
-            Commission Issue
-          </Badge>
-        )}
-      </div>
-    ),
   },
 
   {
@@ -189,7 +147,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-auto px-0 py-0 font-semibold group justify-start"
         >
-          Total Accumulated Rewards (90%)
+          <div className="text-left leading-tight">
+            Total Accumulated
+            <br />
+            Rewards (90%)
+          </div>
           {column.getIsSorted() === "asc" ? (
             <IconSortAscending className="ml-2 h-4 w-4" />
           ) : column.getIsSorted() === "desc" ? (
@@ -205,14 +167,18 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         {formatTacAmount(row.original.totalAccumulatedRewards)} TAC
       </div>
     ),
-    sortingFn: (rowA, rowB, columnId) => {
-      const aVal = parseFloat((rowA.original[columnId] as string).replace(/,/g, "") || "0");
-      const bVal = parseFloat((rowB.original[columnId] as string).replace(/,/g, "") || "0");
+    sortingFn: (rowA, rowB) => {
+      const aVal = parseFloat(
+        rowA.original.totalAccumulatedRewards.replace(/,/g, "") || "0"
+      );
+      const bVal = parseFloat(
+        rowB.original.totalAccumulatedRewards.replace(/,/g, "") || "0"
+      );
       return aVal - bVal;
     },
   },
   {
-    accessorKey: "totalRewardsAlreadyBurnt",
+    accessorKey: "claimedRewards",
     header: ({ column }) => {
       return (
         <Button
@@ -220,7 +186,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-auto px-0 py-0 font-semibold group justify-start"
         >
-          Total Rewards Already Sent to Burn
+          <div className="text-left leading-tight">
+            Claimed
+            <br />
+            Rewards
+          </div>
           {column.getIsSorted() === "asc" ? (
             <IconSortAscending className="ml-2 h-4 w-4" />
           ) : column.getIsSorted() === "desc" ? (
@@ -233,12 +203,55 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     },
     cell: ({ row }) => (
       <div className="font-mono pl-0">
-        {formatTacAmount(row.original.totalRewardsAlreadyBurnt)} TAC
+        {formatTacAmount(row.original.claimedRewards)} TAC
       </div>
     ),
-    sortingFn: (rowA, rowB, columnId) => {
-      const aVal = parseFloat((rowA.original[columnId] as string).replace(/,/g, "") || "0");
-      const bVal = parseFloat((rowB.original[columnId] as string).replace(/,/g, "") || "0");
+    sortingFn: (rowA, rowB) => {
+      const aVal = parseFloat(
+        rowA.original.claimedRewards.replace(/,/g, "") || "0"
+      );
+      const bVal = parseFloat(
+        rowB.original.claimedRewards.replace(/,/g, "") || "0"
+      );
+      return aVal - bVal;
+    },
+  },
+  {
+    accessorKey: "unclaimedRewards",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto px-0 py-0 font-semibold group justify-start"
+        >
+          <div className="text-left leading-tight">
+            Unclaimed
+            <br />
+            Rewards
+          </div>
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="font-mono pl-0">
+        {formatTacAmount(row.original.unclaimedRewards)} TAC
+      </div>
+    ),
+    sortingFn: (rowA, rowB) => {
+      const aVal = parseFloat(
+        rowA.original.unclaimedRewards.replace(/,/g, "") || "0"
+      );
+      const bVal = parseFloat(
+        rowB.original.unclaimedRewards.replace(/,/g, "") || "0"
+      );
       return aVal - bVal;
     },
   },
@@ -251,7 +264,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-auto px-0 py-0 font-semibold group justify-start"
         >
-          Total Rewards to be Burn
+          <div className="text-left leading-tight">
+            Total Rewards
+            <br />
+            to be Burn
+          </div>
           {column.getIsSorted() === "asc" ? (
             <IconSortAscending className="ml-2 h-4 w-4" />
           ) : column.getIsSorted() === "desc" ? (
@@ -267,22 +284,30 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         {formatTacAmount(row.original.totalRewardsToBeBurn)} TAC
       </div>
     ),
-    sortingFn: (rowA, rowB, columnId) => {
-      const aVal = parseFloat((rowA.original[columnId] as string).replace(/,/g, "") || "0");
-      const bVal = parseFloat((rowB.original[columnId] as string).replace(/,/g, "") || "0");
+    sortingFn: (rowA, rowB) => {
+      const aVal = parseFloat(
+        rowA.original.totalRewardsToBeBurn.replace(/,/g, "") || "0"
+      );
+      const bVal = parseFloat(
+        rowB.original.totalRewardsToBeBurn.replace(/,/g, "") || "0"
+      );
       return aVal - bVal;
     },
   },
   {
-    accessorKey: "shouldBurn",
+    accessorKey: "totalRewardsAlreadyBurnt",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-auto p-0 font-semibold"
+          className="h-auto px-0 py-0 font-semibold group justify-start"
         >
-          Action Required
+          <div className="text-left leading-tight">
+            Total Rewards Already
+            <br />
+            Sent to Burn
+          </div>
           {column.getIsSorted() === "asc" ? (
             <IconSortAscending className="ml-2 h-4 w-4" />
           ) : column.getIsSorted() === "desc" ? (
@@ -294,13 +319,57 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     cell: ({ row }) => (
-      <Badge variant={row.original.shouldBurn ? "outline" : "secondary"}>
-        {row.original.shouldBurn ? "Burn Required" : "No Action"}
-      </Badge>
+      <div className="font-mono pl-0">
+        {formatTacAmount(row.original.totalRewardsAlreadyBurnt)} TAC
+      </div>
     ),
     sortingFn: (rowA, rowB) => {
-      const aVal = rowA.original.shouldBurn ? 1 : 0;
-      const bVal = rowB.original.shouldBurn ? 1 : 0;
+      const aVal = parseFloat(
+        rowA.original.totalRewardsAlreadyBurnt.replace(/,/g, "") || "0"
+      );
+      const bVal = parseFloat(
+        rowB.original.totalRewardsAlreadyBurnt.replace(/,/g, "") || "0"
+      );
+      return aVal - bVal;
+    },
+  },
+
+  {
+    accessorKey: "totalAmountDelegated",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto px-0 py-0 font-semibold group justify-start"
+        >
+          <div className="text-left leading-tight">
+            Total Amount
+            <br />
+            Delegated
+          </div>
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="font-mono pl-0">
+        {formatTacAmount(row.original.totalAmountDelegated)} TAC
+      </div>
+    ),
+    sortingFn: (rowA, rowB) => {
+      const aVal = parseFloat(
+        rowA.original.totalAmountDelegated.replace(/,/g, "") || "0"
+      );
+      const bVal = parseFloat(
+        rowB.original.totalAmountDelegated.replace(/,/g, "") || "0"
+      );
       return aVal - bVal;
     },
   },
@@ -335,11 +404,13 @@ function ValidatorRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   return (
     <TableRow data-state={row.getIsSelected() && "selected"}>
       {row.getVisibleCells().map((cell) => {
-        console.log(cell.column.id);
         const isNumber = [
           "totalAccumulatedRewards",
+          "claimedRewards",
+          "unclaimedRewards",
           "totalRewardsAlreadyBurnt",
           "totalRewardsToBeBurn",
+          "totalAmountDelegated",
         ].includes(cell.column.id);
         return (
           <TableCell key={cell.id} className={isNumber ? "pl-5" : ""}>
@@ -373,21 +444,21 @@ export function DataTable() {
     async function fetchValidators() {
       try {
         setLoading(true);
-        const { apiClient } = await import("@/lib/api");
-        const result = await apiClient.getValidators(selectedPeriod);
+        const { cosmosClient } = await import("@/lib/cosmosClient");
+        const result = await cosmosClient.getValidators();
 
         // Transform the API data to match our schema
-        const transformedData = result.validators.map((validator) => ({
+        const transformedData = result.validators.map((validator: any) => ({
           address: validator.address,
           moniker: validator.moniker || "Unknown",
           status: validator.status,
           isActive: validator.isActive,
-          burnAmount: validator.burnAmount,
-          shouldBurn: validator.shouldBurn,
-          hasCommissionIssues: validator.hasCommissionIssues,
+          totalAccumulatedRewards: validator.totalAccumulatedRewards || "0",
+          claimedRewards: validator.claimedRewards || "0",
+          unclaimedRewards: validator.unclaimedRewards || "0",
           totalRewardsAlreadyBurnt: validator.totalRewardsAlreadyBurnt || "0",
           totalRewardsToBeBurn: validator.totalRewardsToBeBurn || "0",
-          totalAccumulatedRewards: validator.totalAccumulatedRewards || "0",
+          totalAmountDelegated: validator.totalAmountDelegated || "0",
         }));
 
         setData(transformedData);
@@ -479,94 +550,7 @@ export function DataTable() {
             />
           </div>
 
-          <Select
-            value={
-              (table.getColumn("status")?.getFilterValue() as string) ?? "all"
-            }
-            onValueChange={(value) => {
-              if (value === "all") {
-                table.getColumn("status")?.setFilterValue(undefined);
-              } else {
-                table.getColumn("status")?.setFilterValue(value);
-              }
-            }}
-          >
-            <SelectTrigger className="w-40">
-              <IconFilter className="h-4 w-4 mr-1" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="issues">Issues</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={
-              (table.getColumn("shouldBurn")?.getFilterValue() as string) ??
-              "all"
-            }
-            onValueChange={(value) => {
-              if (value === "all") {
-                table.getColumn("shouldBurn")?.setFilterValue(undefined);
-              } else {
-                table.getColumn("shouldBurn")?.setFilterValue(value === "burn");
-              }
-            }}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Actions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Actions</SelectItem>
-              <SelectItem value="burn">Burn</SelectItem>
-              <SelectItem value="none">None</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant="outline"
-            onClick={() => {
-              const csvData = table.getFilteredRowModel().rows.map((row) => ({
-                Validator: row.original.moniker,
-                Address: row.original.address,
-                Status: row.original.isActive ? "Active" : "Inactive",
-                "Total Accumulated Rewards (90%)":
-                  row.original.totalAccumulatedRewards,
-                "Total Rewards Already Sent to Burn":
-                  row.original.totalRewardsAlreadyBurnt,
-                "Total Rewards to be Burn": row.original.totalRewardsToBeBurn,
-                "Action Required": row.original.shouldBurn
-                  ? "Burn Required"
-                  : "No Action",
-                "Commission Issues": row.original.hasCommissionIssues
-                  ? "Yes"
-                  : "No",
-              }));
-
-              const csv = [
-                Object.keys(csvData[0] || {}).join(","),
-                ...csvData.map((row) => Object.values(row).join(",")),
-              ].join("\n");
-
-              const blob = new Blob([csv], { type: "text/csv" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `validators-${
-                new Date().toISOString().split("T")[0]
-              }.csv`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-
-              toast.success("Table exported successfully!");
-            }}
-            className="gap-2"
-          >
+          <Button variant="outline" className="gap-2">
             <IconDownload className="h-4 w-4" />
             Export
           </Button>
@@ -586,103 +570,8 @@ export function DataTable() {
             </div>
 
             <div className="flex gap-2">
-              {/* Status Filter */}
-              <Select
-                value={
-                  (table.getColumn("status")?.getFilterValue() as string) ??
-                  "all"
-                }
-                onValueChange={(value) => {
-                  if (value === "all") {
-                    table.getColumn("status")?.setFilterValue(undefined);
-                  } else {
-                    table.getColumn("status")?.setFilterValue(value);
-                  }
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <IconFilter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="issues">Issues</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Burn Action Filter */}
-              <Select
-                value={
-                  (table.getColumn("shouldBurn")?.getFilterValue() as string) ??
-                  "all"
-                }
-                onValueChange={(value) => {
-                  if (value === "all") {
-                    table.getColumn("shouldBurn")?.setFilterValue(undefined);
-                  } else {
-                    table
-                      .getColumn("shouldBurn")
-                      ?.setFilterValue(value === "burn");
-                  }
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Actions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Actions</SelectItem>
-                  <SelectItem value="burn">Burn</SelectItem>
-                  <SelectItem value="none">None</SelectItem>
-                </SelectContent>
-              </Select>
-
               {/* Export Button */}
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const csvData = table
-                    .getFilteredRowModel()
-                    .rows.map((row) => ({
-                      Validator: row.original.moniker,
-                      Address: row.original.address,
-                      Status: row.original.isActive ? "Active" : "Inactive",
-                      "Total Accumulated Rewards (90%)":
-                        row.original.totalAccumulatedRewards,
-                      "Total Rewards Already Sent to Burn":
-                        row.original.totalRewardsAlreadyBurnt,
-                      "Total Rewards to be Burn":
-                        row.original.totalRewardsToBeBurn,
-                      "Action Required": row.original.shouldBurn
-                        ? "Burn Required"
-                        : "No Action",
-                      "Commission Issues": row.original.hasCommissionIssues
-                        ? "Yes"
-                        : "No",
-                    }));
-
-                  const csv = [
-                    Object.keys(csvData[0] || {}).join(","),
-                    ...csvData.map((row) => Object.values(row).join(",")),
-                  ].join("\n");
-
-                  const blob = new Blob([csv], { type: "text/csv" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `validators-${
-                    new Date().toISOString().split("T")[0]
-                  }.csv`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
-
-                  toast.success("Table exported successfully!");
-                }}
-                className="gap-2 shrink-0"
-              >
+              <Button variant="outline" className="gap-2 shrink-0">
                 <IconDownload className="h-4 w-4" />
                 Export
               </Button>
@@ -692,7 +581,7 @@ export function DataTable() {
 
         <div className="overflow-hidden rounded-lg border mx-4 lg:mx-6">
           <Table>
-            <TableHeader className="bg-muted sticky top-0 z-10">
+            <TableHeader className="bg-muted sticky top-0 z-10 h-16">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
