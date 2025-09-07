@@ -1,51 +1,44 @@
-# Requirements for Restricted Validator Monthly Burn Calculation
+# Requirement
 
-## Goal
+restricted validators must take the staking rewards they earn and burn almost all of it.
 
-Calculate how many tokens each restricted validator must send every month for burning.
+- **10% of total staking rewards** always go straight to delegators (untouched).  
+- the remaining **90%** goes to the validator (their commission).  
 
----
+from this validator commission:
 
-## Restricted Validator Rules
+- **100% of what the validator receives = 90% of the total staking rewards**.  
+- from that, the validator must send **88.888889%** to the TAC burn address.  
+  - this equals **80% of the total staking rewards**.  
+- the validator keeps the remaining **11.111111%** of their commission.  
 
-- Validators operate with **locked tokens only**.
-- **Validator commission rate is fixed at 90%**:
-  - **10%** of rewards go to delegators.
-  - From the **90% commission**:
-    - **10%** stays with the validator.
-    - **80%** must be sent to the TAC Foundation and burned.
-
----
-
-## Calculation Scope
-
-- **Only count staking rewards from inflation** (newly minted tokens).
-- Calculation must include **both claimed and unclaimed rewards**.
-- **Timeframe:** Monthly (e.g., “Aug 1 – Aug 31”).
+both claimed and unclaimed rewards count toward this.
 
 ---
 
-## Input Needed
+## Example
 
-- Official list of restricted validators (addresses provided).
-- TAC burn address (where 80% will be sent).
-- Data showing how much each validator earned from inflation in the chosen period.
+- total staking rewards = **100 TAC**  
+- delegators get **10 TAC (10%)**  
+- validator commission = **90 TAC**  
 
----
-
-## Output
-
-For each restricted validator, provide:
-- The **total rewards from inflation** during the month.
-- The **exact 80% portion** they must send for burning.
-- A report usable by TAC Operations to notify validators.
+from that 90 TAC:  
+- burn = **80 TAC** (≈88.9% of validator’s commission)  
+- keep = **10 TAC** (≈11.1% of validator’s commission)  
 
 ---
 
-## Operations Process
+## Restricted Validators
 
-At the end of each month:
-1. Run the calculator.
-2. Send results to restricted validators.
-3. Validators send their 80% share to the TAC burn address.
-4. Ops verifies the tokens arrived at the burn address.
+```json
+restrictedValidators: [
+  "tacvaloper14zdtx5j770q700e8xg2v6lm0g3m58mc0qvs0kp",
+  "tacvaloper1e4xgzj8vasua0pd65t3jnr2nc2yccdqhlhmdvl",
+  "tacvaloper1mcmgua3ewywj8m3y2a6tayfkt8w7m77tl3ruvf",
+  "tacvaloper1vff4r0nc766n6x68ceatv4ffea2ltr8l04u8t6",
+  "tacvaloper1w25sweez0ek6wyk0yg2vx3ttqgyn3tuwjkzfjr",
+  "tacvaloper1tcjtpw8u7u6eu4hez8z2zfu6lssvt82v79egp5",
+  "tacvaloper16937gs3thamqecrrnns3dt7sgzpymkyf5nfpe2",
+  "tacvaloper1lh6xd8x9n9jspywcpf6npke9glh56pd5qreyfd",
+  "tacvaloper1a4xlewuye9uvjyp4s4yklkvg3pkrua02ms047v"
+]

@@ -4,8 +4,6 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { MonthSelector } from "@/components/layout/month-selector";
-import { RefreshButton } from "@/components/layout/refresh-button";
-import { ExportButton } from "@/components/layout/export-button";
 import { BlockHeight } from "@/components/layout/block-height";
 import { Input } from "@/components/ui/input";
 import { IconSearch } from "@tabler/icons-react";
@@ -37,8 +35,6 @@ export function SiteHeader() {
             selectedPeriod={selectedPeriod}
             onPeriodChange={setPeriod}
           />
-          <RefreshButton onRefreshComplete={refreshData} />
-          <ExportButton selectedPeriod={selectedPeriod} />
           <Separator
             orientation="vertical"
             className="mx-1 data-[orientation=vertical]:h-4"

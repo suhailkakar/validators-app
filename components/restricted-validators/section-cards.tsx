@@ -12,33 +12,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiClient, type BurnSummary } from "@/lib/api";
 import { formatTacAmount } from "@/lib/utils";
 import { usePeriod } from "@/contexts/period-context";
 
 export function SectionCards() {
-  const [data, setData] = useState<BurnSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { selectedPeriod, refreshKey } = usePeriod();
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const summary = await apiClient.getBurnSummary(selectedPeriod);
-        setData(summary);
-        setError(null);
-      } catch (err) {
-        console.error("Failed to fetch burn summary:", err);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [selectedPeriod, refreshKey]);
 
   if (loading) {
     return (
@@ -58,24 +39,9 @@ export function SectionCards() {
     );
   }
 
-  if (error || !data) {
-    return (
-      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4  *:data-[slot=card]: lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
-        <Card className="@container/card">
-          <CardHeader>
-            <CardDescription>Error</CardDescription>
-            <CardTitle className="text-2xl font-semibold text-red-500">
-              {error || "No data available"}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
   const TAC_LABEL = () => {
     return (
-      <Badge variant="default" className="text-sm rounded-lg ">
+      <Badge variant="default" className="text-sm rounded-lg">
         $TAC
       </Badge>
     );
@@ -106,7 +72,7 @@ export function SectionCards() {
             Total Rewards to Restricted Validators
           </CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {formatTacAmount(data.totalInflationRewards)} <TAC_LABEL />
+            {formatTacAmount(0)} <TAC_LABEL />
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
@@ -121,7 +87,8 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Accumulated Rewards Burnt</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {formatTacAmount(data.accumulatedRewardsBurnt)} <TAC_LABEL />
+            {formatTacAmount(0)}
+            <TAC_LABEL />
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
@@ -138,7 +105,7 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>80% of Total Staking Rewards</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {formatTacAmount(data.totalBurnAmount)} <TAC_LABEL />
+            {formatTacAmount(0)} <TAC_LABEL />
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
@@ -153,14 +120,13 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>% Supply Staked to Restricted</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {Math.ceil(parseFloat(data.restrictedStakePercentage || "0"))}%
+            0%
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
             Bonded stake held by restricted set
           </div>
-          <div className="text-muted-foreground">Period: {data.period}</div>
         </CardFooter>
       </Card>
     </div>

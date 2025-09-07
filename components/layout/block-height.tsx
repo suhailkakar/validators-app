@@ -3,44 +3,20 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiClient } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
 
 interface BlockHeightData {
   height: string;
   timestamp: string;
-  cached?: boolean;
-  cacheAge?: number;
 }
 
 export function BlockHeight() {
-  const [data, setData] = useState<BlockHeightData | null>(null);
+  const [data, setData] = useState<BlockHeightData | null>({
+    height: "20",
+    timestamp: "2025-01-01",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchBlockHeight() {
-      try {
-        setLoading(true);
-        const blockHeight = await apiClient.getBlockHeight();
-        setData(blockHeight);
-        setError(null);
-      } catch (err) {
-        console.error("Failed to fetch block height:", err);
-        setError("Failed to load block height");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    // Fetch immediately
-    fetchBlockHeight();
-
-    // Set up interval to refresh every 30 seconds
-    const interval = setInterval(fetchBlockHeight, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   if (loading) {
     return (
