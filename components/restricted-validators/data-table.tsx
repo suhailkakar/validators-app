@@ -73,6 +73,7 @@ export const schema = z.object({
   totalRewardsAlreadyBurnt: z.string(),
   totalRewardsToBeBurn: z.string(),
   totalAmountDelegated: z.string(),
+  shouldBurn: z.boolean(),
 });
 
 const columns: ColumnDef<z.infer<typeof schema>>[] = [
@@ -163,7 +164,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="font-mono pl-0">
+      <div className="font-mono ">
         {formatTacAmount(row.original.totalAccumulatedRewards)} TAC
       </div>
     ),
@@ -202,7 +203,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="font-mono pl-0">
+      <div className="font-mono ">
         {formatTacAmount(row.original.claimedRewards)} TAC
       </div>
     ),
@@ -241,7 +242,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="font-mono pl-0">
+      <div className="font-mono ">
         {formatTacAmount(row.original.unclaimedRewards)} TAC
       </div>
     ),
@@ -280,7 +281,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="font-mono pl-0">
+      <div className="font-mono ">
         {formatTacAmount(row.original.totalRewardsToBeBurn)} TAC
       </div>
     ),
@@ -319,7 +320,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="font-mono pl-0">
+      <div className="font-mono ">
         {formatTacAmount(row.original.totalRewardsAlreadyBurnt)} TAC
       </div>
     ),
@@ -359,7 +360,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="font-mono pl-0">
+      <div className="font-mono ">
         {formatTacAmount(row.original.totalAmountDelegated)} TAC
       </div>
     ),
@@ -432,7 +433,9 @@ export function DataTable() {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "totalAccumulatedRewards", desc: true },
+  ]);
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
@@ -448,18 +451,35 @@ export function DataTable() {
         const result = await cosmosClient.getValidators();
 
         // Transform the API data to match our schema
-        const transformedData = result.validators.map((validator: any) => ({
-          address: validator.address,
-          moniker: validator.moniker || "Unknown",
-          status: validator.status,
-          isActive: validator.isActive,
-          totalAccumulatedRewards: validator.totalAccumulatedRewards || "0",
-          claimedRewards: validator.claimedRewards || "0",
-          unclaimedRewards: validator.unclaimedRewards || "0",
-          totalRewardsAlreadyBurnt: validator.totalRewardsAlreadyBurnt || "0",
-          totalRewardsToBeBurn: validator.totalRewardsToBeBurn || "0",
-          totalAmountDelegated: validator.totalAmountDelegated || "0",
-        }));
+        type ValidatorApi = {
+          address: string;
+          moniker?: string;
+          status: string;
+          isActive: boolean;
+          totalAccumulatedRewards?: string;
+          claimedRewards?: string;
+          unclaimedRewards?: string;
+          totalRewardsAlreadyBurnt?: string;
+          totalRewardsToBeBurn?: string;
+          totalAmountDelegated?: string;
+          shouldBurn?: boolean;
+        };
+
+        const transformedData = result.validators.map(
+          (validator: ValidatorApi) => ({
+            address: validator.address,
+            moniker: validator.moniker || "Unknown",
+            status: validator.status,
+            isActive: validator.isActive,
+            totalAccumulatedRewards: validator.totalAccumulatedRewards || "0",
+            claimedRewards: validator.claimedRewards || "0",
+            unclaimedRewards: validator.unclaimedRewards || "0",
+            totalRewardsAlreadyBurnt: validator.totalRewardsAlreadyBurnt || "0",
+            totalRewardsToBeBurn: validator.totalRewardsToBeBurn || "0",
+            totalAmountDelegated: validator.totalAmountDelegated || "0",
+            shouldBurn: validator.shouldBurn ?? false,
+          })
+        );
 
         setData(transformedData);
         setError(null);
@@ -620,9 +640,91 @@ export function DataTable() {
                   </TableCell>
                 </TableRow>
               ) : table.getRowModel().rows?.length ? (
-                table
-                  .getRowModel()
-                  .rows.map((row) => <ValidatorRow key={row.id} row={row} />)
+                <>
+                  {table.getRowModel().rows.map((row) => (
+                    <ValidatorRow key={row.id} row={row} />
+                  ))}
+                  {/* Totals Row */}
+                  <TableRow className="border-t-2 border-border bg-muted/50 font-medium ">
+                    <TableCell></TableCell>
+                    <TableCell className="font-semibold">TOTALS</TableCell>
+                    <TableCell className="font-mono ">
+                      <p className="ml-2.5">
+                        {formatTacAmount(
+                          data.reduce(
+                            (sum, row) =>
+                              sum +
+                              parseFloat(row.totalAccumulatedRewards || "0"),
+                            0
+                          )
+                        )}{" "}
+                        TAC
+                      </p>
+                    </TableCell>
+                    <TableCell className="font-mono ">
+                      <p className="ml-2.5">
+                        {formatTacAmount(
+                          data.reduce(
+                            (sum, row) =>
+                              sum + parseFloat(row.claimedRewards || "0"),
+                            0
+                          )
+                        )}{" "}
+                        TAC
+                      </p>
+                    </TableCell>
+                    <TableCell className="font-mono ">
+                      <p className="ml-2.5">
+                        {formatTacAmount(
+                          data.reduce(
+                            (sum, row) =>
+                              sum + parseFloat(row.unclaimedRewards || "0"),
+                            0
+                          )
+                        )}{" "}
+                        TAC
+                      </p>
+                    </TableCell>
+                    <TableCell className="font-mono ">
+                      <p className="ml-2.5">
+                        {formatTacAmount(
+                          data.reduce(
+                            (sum, row) =>
+                              sum + parseFloat(row.totalRewardsToBeBurn || "0"),
+                            0
+                          )
+                        )}{" "}
+                        TAC
+                      </p>
+                    </TableCell>
+                    <TableCell className="font-mono ">
+                      <p className="ml-2.5">
+                        {formatTacAmount(
+                          data.reduce(
+                            (sum, row) =>
+                              sum +
+                              parseFloat(row.totalRewardsAlreadyBurnt || "0"),
+                            0
+                          )
+                        )}{" "}
+                        TAC
+                      </p>
+                    </TableCell>
+                    <TableCell className="font-mono ">
+                      <p className="ml-2.5">
+                        {formatTacAmount(
+                          data.reduce(
+                            (sum, row) =>
+                              sum + parseFloat(row.totalAmountDelegated || "0"),
+                            0
+                          )
+                        )}{" "}
+                        TAC
+                      </p>
+                    </TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                </>
               ) : (
                 <TableRow>
                   <TableCell

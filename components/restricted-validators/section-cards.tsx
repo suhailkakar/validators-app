@@ -15,11 +15,76 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatTacAmount } from "@/lib/utils";
 import { usePeriod } from "@/contexts/period-context";
 
+interface ValidatorData {
+  totalRewardsToRestricted: string;
+  burnObligation: string;
+  percentStaked: number;
+}
+
 export function SectionCards() {
-  const [data, setData] = useState<null>(null);
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<ValidatorData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { selectedPeriod, refreshKey } = usePeriod();
+
+  useEffect(() => {
+    async function fetchValidatorData() {
+      try {
+        setLoading(true);
+        const { cosmosClient } = await import("@/lib/cosmosClient");
+        const result = await cosmosClient.getValidators();
+
+        // Calculate total rewards to restricted validators
+        let totalClaimed = BigInt(0);
+        let totalUnclaimed = BigInt(0);
+        let totalStaked = BigInt(0);
+
+        result.validators.forEach((validator: any) => {
+          totalClaimed += BigInt(validator.claimedRewards || "0");
+          totalUnclaimed += BigInt(validator.unclaimedRewards || "0");
+          totalStaked += BigInt(validator.totalAmountDelegated || "0");
+        });
+
+        const totalRewards = totalClaimed + totalUnclaimed;
+
+        // Calculate burn obligation: 88.888889% of total rewards
+        const burnObligation =
+          (totalRewards * BigInt(888889)) / BigInt(1000000);
+
+        // Get total network-wide staked amount
+        const totalBondedStr = await cosmosClient.getTotalBondedTokens();
+        const totalBonded = BigInt(totalBondedStr);
+
+        // Calculate percentage: restricted validators staked / total network staked
+        const percentStaked =
+          totalBonded > 0
+            ? Number((totalStaked * BigInt(10000)) / totalBonded) / 100
+            : 0;
+
+        console.log(`🔍 Staking calculation debug:`);
+        console.log(
+          `Total staked to restricted validators: ${totalStaked.toString()} TAC`
+        );
+        console.log(`Total network-wide staked: ${totalBonded.toString()} TAC`);
+        console.log(`Percentage: ${percentStaked.toFixed(4)}%`);
+
+        setData({
+          totalRewardsToRestricted: totalRewards.toString(),
+          burnObligation: burnObligation.toString(),
+          percentStaked: percentStaked,
+        });
+
+        setError(null);
+      } catch (err) {
+        console.error("Failed to fetch validator data:", err);
+        setError("Failed to load validator data");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchValidatorData();
+  }, [selectedPeriod, refreshKey]);
 
   if (loading) {
     return (
@@ -72,12 +137,15 @@ export function SectionCards() {
             Total Rewards to Restricted Validators
           </CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {formatTacAmount(0)} <TAC_LABEL />
+            {data
+              ? formatTacAmount(parseFloat(data.totalRewardsToRestricted))
+              : "0"}{" "}
+            <TAC_LABEL />
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Validator commission only (90% share){" "}
+            Claimed + unclaimed rewards{" "}
           </div>
           <div className="text-muted-foreground">Since network launch</div>
         </CardFooter>
@@ -105,7 +173,8 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>80% of Total Staking Rewards</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {formatTacAmount(0)} <TAC_LABEL />
+            {data ? formatTacAmount(parseFloat(data.burnObligation)) : "0"}{" "}
+            <TAC_LABEL />
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
@@ -118,13 +187,16 @@ export function SectionCards() {
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>% Supply Staked to Restricted</CardDescription>
+          <CardDescription>% Staked to Restricted Validators</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            0%
+            {data ? `${data.percentStaked.toFixed(2)}%` : "0%"}
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
+            Of total network-wide staked TAC
+          </div>
+          <div className="text-muted-foreground">
             Bonded stake held by restricted set
           </div>
         </CardFooter>

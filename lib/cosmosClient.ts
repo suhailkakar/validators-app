@@ -1,5 +1,5 @@
 const COSMOS_API_URL = 'https://cosmos-api.rpc.tac.build';
-const RPC_URL = 'https://rpc.tac.build';
+const RPC_URL = 'https://tendermint.rpc.tac.build';
 
 // Restricted validators from requirements.txt
 const RESTRICTED_VALIDATORS = [
@@ -91,6 +91,143 @@ export class CosmosClient {
     }
   }
 
+  // Method to get claimed rewards from transaction history
+  async getClaimedRewards() {
+    try {
+      const query = `"message.action='/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission'"`;
+      const url = `${this.rpcUrl}/tx_search?query=${encodeURIComponent(query)}&per_page=100&page=1`;
+      
+      console.log(`🔍 Fetching claimed rewards from: ${url}`);
+      
+      const response = await fetch(url);
+      console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch claimed rewards: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log(`📦 API Response:`, data);
+      const claimedRewardsMap = new Map<string, bigint>();
+      
+      // Initialize all restricted validators with 0
+      RESTRICTED_VALIDATORS.forEach(validator => {
+        claimedRewardsMap.set(validator, BigInt(0));
+      });
+      
+      console.log(`📦 Found ${data.result?.txs?.length || 0} total transactions`);
+      
+      if (data.result?.txs) {
+        data.result.txs.forEach((tx: any, txIndex: number) => {
+          // For each transaction, find both the validator (from withdraw_rewards) and amount (from withdraw_commission)
+          let validatorAddress: string | null = null;
+          let commissionAmount: string | null = null;
+          
+          // First pass: find the validator address from withdraw_rewards event
+          tx.tx_result?.events?.forEach((event: any) => {
+            if (event.type === 'withdraw_rewards') {
+              const validatorAttr = event.attributes?.find((attr: any) => attr.key === 'validator');
+              if (validatorAttr && RESTRICTED_VALIDATORS.includes(validatorAttr.value)) {
+                validatorAddress = validatorAttr.value;
+              }
+            }
+          });
+          
+          // Second pass: find the commission amount from withdraw_commission event
+          tx.tx_result?.events?.forEach((event: any) => {
+            if (event.type === 'withdraw_commission') {
+              const amountAttr = event.attributes?.find((attr: any) => attr.key === 'amount');
+              if (amountAttr) {
+                commissionAmount = amountAttr.value;
+              }
+            }
+          });
+          
+          // If we found both validator and amount, and validator is restricted, process it
+          if (validatorAddress && commissionAmount) {
+            console.log(`🎯 Processing claimed reward for: ${validatorAddress}, Amount: ${commissionAmount}`);
+            const utacAmount = commissionAmount.replace('utac', '');
+            const currentAmount = claimedRewardsMap.get(validatorAddress) || BigInt(0);
+            const newAmount = currentAmount + BigInt(utacAmount);
+            claimedRewardsMap.set(validatorAddress, newAmount);
+          }
+        });
+      }
+      
+      // Convert from utac to TAC
+      const result = new Map<string, string>();
+      claimedRewardsMap.forEach((value, key) => {
+        const tacAmount = (value / BigInt(10**18)).toString();
+        console.log(`📊 Final claimed rewards for ${key}: ${tacAmount} TAC`);
+        result.set(key, tacAmount);
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Failed to fetch claimed rewards:', error);
+      // Return zeros for all validators on error
+      const result = new Map<string, string>();
+      RESTRICTED_VALIDATORS.forEach(validator => {
+        result.set(validator, '0');
+      });
+      return result;
+    }
+  }
+
+  // Method to get total supply
+  async getTotalSupply(): Promise<string> {
+    try {
+      const response = await fetch(
+        `${this.cosmosApiUrl}/cosmos/bank/v1beta1/supply`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch supply: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Find TAC supply (in utac)
+      const tacSupply = data.supply?.find((s: any) => s.denom === 'utac');
+      if (tacSupply) {
+        // Convert from utac to TAC (divide by 10^18)
+        const supplyInTac = (BigInt(tacSupply.amount) / BigInt(10**18)).toString();
+        console.log(`🏦 Total supply: ${supplyInTac} TAC`);
+        return supplyInTac;
+      }
+      
+      return '0';
+    } catch (error) {
+      console.error('Failed to fetch total supply:', error);
+      return '1000000000'; // 1B TAC fallback
+    }
+  }
+
+  // Method to get total bonded tokens (total staked across all validators)
+  async getTotalBondedTokens(): Promise<string> {
+    try {
+      const response = await fetch(
+        `${this.cosmosApiUrl}/cosmos/staking/v1beta1/pool`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch staking pool: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Get bonded tokens from pool
+      const bondedTokens = data.pool?.bonded_tokens || '0';
+      // Convert from utac to TAC (divide by 10^18)
+      const bondedInTac = (BigInt(bondedTokens) / BigInt(10**18)).toString();
+      console.log(`🥩 Total bonded tokens: ${bondedInTac} TAC`);
+      return bondedInTac;
+    } catch (error) {
+      console.error('Failed to fetch total bonded tokens:', error);
+      return '0';
+    }
+  }
+
   // Method to get all validators
   async getValidators() {
     try {
@@ -109,6 +246,9 @@ export class CosmosClient {
         RESTRICTED_VALIDATORS.includes(validator.operator_address)
       );
       
+      // Get claimed rewards for all validators
+      const claimedRewardsMap = await this.getClaimedRewards();
+      
       // Transform the data and fetch commission for each validator
       const transformedValidators = await Promise.all(
         restrictedValidators.map(async (validator: any) => {
@@ -119,8 +259,8 @@ export class CosmosClient {
           // Fetch unclaimed rewards (commission) for this validator
           const unclaimedRewards = await this.getValidatorCommission(validator.operator_address);
           
-          // Calculate totals and burn amounts
-          const claimedRewards = '0'; // Static for now
+          // Get claimed rewards from transaction history
+          const claimedRewards = claimedRewardsMap.get(validator.operator_address) || '0';
           const totalRewards = (BigInt(claimedRewards) + BigInt(unclaimedRewards)).toString();
           
           // Calculate burn amount: 88.888889% of total rewards (which equals 80% of original staking rewards)
