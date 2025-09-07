@@ -95,19 +95,6 @@ export class CosmosClient {
   async getClaimedRewards() {
     try {
       const query = `"message.action='/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission'"`;
-      const url = `${this.rpcUrl}/tx_search?query=${encodeURIComponent(query)}&per_page=100&page=1`;
-      
-      console.log(`🔍 Fetching claimed rewards from: ${url}`);
-      
-      const response = await fetch(url);
-      console.log(`📡 Response status: ${response.status} ${response.statusText}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch claimed rewards: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log(`📦 API Response:`, data);
       const claimedRewardsMap = new Map<string, bigint>();
       
       // Initialize all restricted validators with 0
@@ -115,10 +102,35 @@ export class CosmosClient {
         claimedRewardsMap.set(validator, BigInt(0));
       });
       
-      console.log(`📦 Found ${data.result?.txs?.length || 0} total transactions`);
+      let page = 1;
+      let totalTransactions = 0;
       
-      if (data.result?.txs) {
-        data.result.txs.forEach((tx: any, txIndex: number) => {
+      console.log(`🔍 Starting paginated fetch of claimed rewards...`);
+      
+      // Loop through all pages until we get zero results
+      while (true) {
+        const url = `${this.rpcUrl}/tx_search?query=${encodeURIComponent(query)}&per_page=100&page=${page}`;
+        console.log(`📄 Fetching page ${page}...`);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch claimed rewards page ${page}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const txsCount = data.result?.txs?.length || 0;
+        
+        console.log(`📦 Page ${page}: Found ${txsCount} transactions`);
+        
+        // If no transactions on this page, we're done
+        if (txsCount === 0) {
+          break;
+        }
+        
+        totalTransactions += txsCount;
+        
+        // Process transactions on this page
+        data.result.txs.forEach((tx: any) => {
           // For each transaction, find both the validator (from withdraw_rewards) and amount (from withdraw_commission)
           let validatorAddress: string | null = null;
           let commissionAmount: string | null = null;
@@ -152,7 +164,17 @@ export class CosmosClient {
             claimedRewardsMap.set(validatorAddress, newAmount);
           }
         });
+        
+        page++;
+        
+        // Safety break to avoid infinite loops (adjust as needed)
+        if (page > 100) {
+          console.warn(`⚠️ Reached page limit (100), stopping pagination`);
+          break;
+        }
       }
+      
+      console.log(`✅ Pagination complete! Processed ${totalTransactions} total transactions across ${page - 1} pages`);
       
       // Convert from utac to TAC
       const result = new Map<string, string>();
