@@ -31,10 +31,7 @@ export function SiteHeader() {
             <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="Search..." className="w-64 pl-9" />
           </div>
-          <MonthSelector
-            selectedPeriod={selectedPeriod}
-            onPeriodChange={setPeriod}
-          />
+
           <Separator
             orientation="vertical"
             className="mx-1 data-[orientation=vertical]:h-4"

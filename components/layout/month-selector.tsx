@@ -12,9 +12,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface MonthSelectorProps {
-  selectedPeriod: string;
+  selectedPeriod?: string;
   onPeriodChange: (period: string) => void;
 }
+
+// Hardcode current month as September for default selection
+const DEFAULT_CURRENT_MONTH = "2025-09";
 
 export function MonthSelector({
   selectedPeriod,
@@ -23,7 +26,8 @@ export function MonthSelector({
   // Generate previous month + current month + next 3 months (5 total)
   const generateMonthOptions = () => {
     const months = [];
-    const now = new Date();
+    // Hardcode "now" as September 2025 for this selector
+    const now = new Date(2025, 8, 1); // JS months are 0-based, so 8 = September
 
     // Start from 1 month ago to 3 months in the future
     for (let i = -1; i <= 3; i++) {
@@ -39,7 +43,7 @@ export function MonthSelector({
       months.push({
         id: periodId,
         display: displayName,
-        isCurrent: periodId === getCurrentMonth(),
+        isCurrent: periodId === DEFAULT_CURRENT_MONTH,
         isFuture: i > 0,
       });
     }
@@ -47,12 +51,8 @@ export function MonthSelector({
     return months; // Already in chronological order (old → current → new)
   };
 
-  const getCurrentMonth = () => {
-    const now = new Date();
-    return `${now.getFullYear()}-${(now.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}`;
-  };
+  // Hardcode current month as September 2025
+  const getCurrentMonth = () => DEFAULT_CURRENT_MONTH;
 
   const getDisplayName = (period: string) => {
     const [year, month] = period.split("-");
@@ -65,12 +65,23 @@ export function MonthSelector({
 
   const monthOptions = generateMonthOptions();
 
+  // If no selectedPeriod, default to September 2025
+  const effectiveSelectedPeriod = selectedPeriod || DEFAULT_CURRENT_MONTH;
+
+  React.useEffect(() => {
+    // If no selectedPeriod, notify parent to set default to September
+    if (!selectedPeriod) {
+      onPeriodChange(DEFAULT_CURRENT_MONTH);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="w-auto">
           <Calendar className="h-4 w-4 mr-2" />
-          {getDisplayName(selectedPeriod)}
+          {getDisplayName(effectiveSelectedPeriod)}
           <ChevronDown className="h-4 w-4 ml-2" />
         </Button>
       </DropdownMenuTrigger>
@@ -79,9 +90,9 @@ export function MonthSelector({
           <DropdownMenuItem
             key={month.id}
             onClick={() => onPeriodChange(month.id)}
-            className={`${month.id === selectedPeriod ? "bg-accent" : ""} ${
-              month.isFuture ? "opacity-60" : ""
-            }`}
+            className={`${
+              month.id === effectiveSelectedPeriod ? "bg-accent" : ""
+            } ${month.isFuture ? "opacity-60" : ""}`}
             disabled={month.isFuture}
           >
             <div className="flex items-center justify-between w-full">

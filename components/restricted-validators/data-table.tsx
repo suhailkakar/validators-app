@@ -138,9 +138,8 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     },
     enableHiding: false,
   },
-
   {
-    accessorKey: "totalAccumulatedRewards",
+    accessorKey: "totalAmountDelegated",
     header: ({ column }) => {
       return (
         <Button
@@ -149,9 +148,9 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           className="h-auto px-0 py-0 font-semibold group justify-start"
         >
           <div className="text-left leading-tight">
-            Total Accumulated
+            Total Amount
             <br />
-            Rewards (90%)
+            Delegated
           </div>
           {column.getIsSorted() === "asc" ? (
             <IconSortAscending className="ml-2 h-4 w-4" />
@@ -165,19 +164,20 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     },
     cell: ({ row }) => (
       <div className="font-mono ">
-        {formatTacAmount(row.original.totalAccumulatedRewards)} TAC
+        {formatTacAmount(row.original.totalAmountDelegated)} TAC
       </div>
     ),
     sortingFn: (rowA, rowB) => {
       const aVal = parseFloat(
-        rowA.original.totalAccumulatedRewards.replace(/,/g, "") || "0"
+        rowA.original.totalAmountDelegated.replace(/,/g, "") || "0"
       );
       const bVal = parseFloat(
-        rowB.original.totalAccumulatedRewards.replace(/,/g, "") || "0"
+        rowB.original.totalAmountDelegated.replace(/,/g, "") || "0"
       );
       return aVal - bVal;
     },
   },
+
   {
     accessorKey: "claimedRewards",
     header: ({ column }) => {
@@ -252,6 +252,45 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
       const bVal = parseFloat(
         rowB.original.unclaimedRewards.replace(/,/g, "") || "0"
+      );
+      return aVal - bVal;
+    },
+  },
+  {
+    accessorKey: "totalAccumulatedRewards",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto px-0 py-0 font-semibold group justify-start"
+        >
+          <div className="text-left leading-tight">
+            Total Accumulated
+            <br />
+            Rewards (90%)
+          </div>
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
+          )}
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="font-mono ">
+        {formatTacAmount(row.original.totalAccumulatedRewards)} TAC
+      </div>
+    ),
+    sortingFn: (rowA, rowB) => {
+      const aVal = parseFloat(
+        rowA.original.totalAccumulatedRewards.replace(/,/g, "") || "0"
+      );
+      const bVal = parseFloat(
+        rowB.original.totalAccumulatedRewards.replace(/,/g, "") || "0"
       );
       return aVal - bVal;
     },
@@ -333,71 +372,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
       return aVal - bVal;
     },
-  },
-
-  {
-    accessorKey: "totalAmountDelegated",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-auto px-0 py-0 font-semibold group justify-start"
-        >
-          <div className="text-left leading-tight">
-            Total Amount
-            <br />
-            Delegated
-          </div>
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4 opacity-40 group-hover:opacity-100" />
-          )}
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="font-mono ">
-        {formatTacAmount(row.original.totalAmountDelegated)} TAC
-      </div>
-    ),
-    sortingFn: (rowA, rowB) => {
-      const aVal = parseFloat(
-        rowA.original.totalAmountDelegated.replace(/,/g, "") || "0"
-      );
-      const bVal = parseFloat(
-        rowB.original.totalAmountDelegated.replace(/,/g, "") || "0"
-      );
-      return aVal - bVal;
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon"
-          >
-            <IconDotsVertical />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem>View Details</DropdownMenuItem>
-          <DropdownMenuItem>Copy Address</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {row.original.shouldBurn && (
-            <DropdownMenuItem>Execute Burn</DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
   },
 ];
 
@@ -645,7 +619,7 @@ export function DataTable() {
                     <ValidatorRow key={row.id} row={row} />
                   ))}
                   {/* Totals Row */}
-                  <TableRow className="border-t-2 border-border bg-muted/50 font-medium ">
+                  <TableRow className="border-t-2 border-border bg-muted font-medium ">
                     <TableCell></TableCell>
                     <TableCell className="font-semibold">TOTALS</TableCell>
                     <TableCell className="font-mono ">
@@ -653,9 +627,27 @@ export function DataTable() {
                         {formatTacAmount(
                           data.reduce(
                             (sum, row) =>
-                              sum +
-                              parseFloat(row.totalAccumulatedRewards || "0"),
-                            0
+                              (
+                                BigInt(sum.toString()) +
+                                BigInt(row.totalAmountDelegated || "0")
+                              ).toString(),
+                            "0"
+                          )
+                        )}{" "}
+                        TAC
+                      </p>
+                    </TableCell>
+
+                    <TableCell className="font-mono ">
+                      <p className="ml-2.5">
+                        {formatTacAmount(
+                          data.reduce(
+                            (sum, row) =>
+                              (
+                                BigInt(sum.toString()) +
+                                BigInt(row.claimedRewards || "0")
+                              ).toString(),
+                            "0"
                           )
                         )}{" "}
                         TAC
@@ -666,8 +658,11 @@ export function DataTable() {
                         {formatTacAmount(
                           data.reduce(
                             (sum, row) =>
-                              sum + parseFloat(row.claimedRewards || "0"),
-                            0
+                              (
+                                BigInt(sum.toString()) +
+                                BigInt(row.unclaimedRewards || "0")
+                              ).toString(),
+                            "0"
                           )
                         )}{" "}
                         TAC
@@ -678,8 +673,11 @@ export function DataTable() {
                         {formatTacAmount(
                           data.reduce(
                             (sum, row) =>
-                              sum + parseFloat(row.unclaimedRewards || "0"),
-                            0
+                              (
+                                BigInt(sum.toString()) +
+                                BigInt(row.totalAccumulatedRewards || "0")
+                              ).toString(),
+                            "0"
                           )
                         )}{" "}
                         TAC
@@ -690,8 +688,11 @@ export function DataTable() {
                         {formatTacAmount(
                           data.reduce(
                             (sum, row) =>
-                              sum + parseFloat(row.totalRewardsToBeBurn || "0"),
-                            0
+                              (
+                                BigInt(sum.toString()) +
+                                BigInt(row.totalRewardsToBeBurn || "0")
+                              ).toString(),
+                            "0"
                           )
                         )}{" "}
                         TAC
@@ -702,27 +703,16 @@ export function DataTable() {
                         {formatTacAmount(
                           data.reduce(
                             (sum, row) =>
-                              sum +
-                              parseFloat(row.totalRewardsAlreadyBurnt || "0"),
-                            0
+                              (
+                                BigInt(sum.toString()) +
+                                BigInt(row.totalRewardsAlreadyBurnt || "0")
+                              ).toString(),
+                            "0"
                           )
                         )}{" "}
                         TAC
                       </p>
                     </TableCell>
-                    <TableCell className="font-mono ">
-                      <p className="ml-2.5">
-                        {formatTacAmount(
-                          data.reduce(
-                            (sum, row) =>
-                              sum + parseFloat(row.totalAmountDelegated || "0"),
-                            0
-                          )
-                        )}{" "}
-                        TAC
-                      </p>
-                    </TableCell>
-                    <TableCell></TableCell>
                   </TableRow>
                 </>
               ) : (

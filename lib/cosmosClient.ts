@@ -74,14 +74,12 @@ export class CosmosClient {
 
       const data = await response.json();
       
-      // Extract TAC commission amount and convert from utac to TAC  
+      // Extract utac commission amount (keep in utac)
       const commission = data.commission?.commission?.find((c: any) => c.denom === 'utac');
       if (commission) {
-        // Convert from utac to TAC (divide by 10^18) using BigInt for precision
-        // utac uses 18 decimal places like most cosmos tokens
-        const amountInUtac = commission.amount.split('.')[0]; // Remove decimal part
-        const amountInTac = (BigInt(amountInUtac) / BigInt(10**18)).toString();
-        return amountInTac;
+        // Keep in utac - remove only decimal part, no conversion
+        const amountInUtac = commission.amount.split('.')[0];
+        return amountInUtac;
       }
       
       return '0';
@@ -102,34 +100,22 @@ export class CosmosClient {
         claimedRewardsMap.set(validator, BigInt(0));
       });
       
-      let page = 1;
-      let totalTransactions = 0;
+      console.log(`🔍 Fetching claimed rewards (page 1 only)...`);
       
-      console.log(`🔍 Starting paginated fetch of claimed rewards...`);
+      const url = `${this.rpcUrl}/tx_search?query=${encodeURIComponent(query)}&per_page=100&page=1`;
       
-      // Loop through all pages until we get zero results
-      while (true) {
-        const url = `${this.rpcUrl}/tx_search?query=${encodeURIComponent(query)}&per_page=100&page=${page}`;
-        console.log(`📄 Fetching page ${page}...`);
-        
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch claimed rewards page ${page}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        const txsCount = data.result?.txs?.length || 0;
-        
-        console.log(`📦 Page ${page}: Found ${txsCount} transactions`);
-        
-        // If no transactions on this page, we're done
-        if (txsCount === 0) {
-          break;
-        }
-        
-        totalTransactions += txsCount;
-        
-        // Process transactions on this page
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch claimed rewards: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const txsCount = data.result?.txs?.length || 0;
+      
+      console.log(`📦 Found ${txsCount} transactions`);
+      
+      // Process transactions
+      if (data.result?.txs) {
         data.result.txs.forEach((tx: any) => {
           // For each transaction, find both the validator (from withdraw_rewards) and amount (from withdraw_commission)
           let validatorAddress: string | null = null;
@@ -164,24 +150,16 @@ export class CosmosClient {
             claimedRewardsMap.set(validatorAddress, newAmount);
           }
         });
-        
-        page++;
-        
-        // Safety break to avoid infinite loops (adjust as needed)
-        if (page > 100) {
-          console.warn(`⚠️ Reached page limit (100), stopping pagination`);
-          break;
-        }
       }
       
-      console.log(`✅ Pagination complete! Processed ${totalTransactions} total transactions across ${page - 1} pages`);
+      console.log(`✅ Processed ${txsCount} transactions from page 1`);
       
-      // Convert from utac to TAC
+      // Return utac amounts as strings (no conversion here)
       const result = new Map<string, string>();
       claimedRewardsMap.forEach((value, key) => {
-        const tacAmount = (value / BigInt(10**18)).toString();
-        console.log(`📊 Final claimed rewards for ${key}: ${tacAmount} TAC`);
-        result.set(key, tacAmount);
+        const utacAmount = value.toString();
+        console.log(`📊 Final claimed rewards for ${key}: ${utacAmount} utac`);
+        result.set(key, utacAmount);
       });
       
       return result;
@@ -209,19 +187,18 @@ export class CosmosClient {
 
       const data = await response.json();
       
-      // Find TAC supply (in utac)
+      // Return supply in utac
       const tacSupply = data.supply?.find((s: any) => s.denom === 'utac');
       if (tacSupply) {
-        // Convert from utac to TAC (divide by 10^18)
-        const supplyInTac = (BigInt(tacSupply.amount) / BigInt(10**18)).toString();
-        console.log(`🏦 Total supply: ${supplyInTac} TAC`);
-        return supplyInTac;
+        const supplyInUtac = tacSupply.amount;
+        console.log(`🏦 Total supply: ${supplyInUtac} utac`);
+        return supplyInUtac;
       }
       
       return '0';
     } catch (error) {
       console.error('Failed to fetch total supply:', error);
-      return '1000000000'; // 1B TAC fallback
+      return '1000000000000000000000000000'; // 1B TAC in utac fallback
     }
   }
 
@@ -238,12 +215,10 @@ export class CosmosClient {
 
       const data = await response.json();
       
-      // Get bonded tokens from pool
+      // Return bonded tokens in utac
       const bondedTokens = data.pool?.bonded_tokens || '0';
-      // Convert from utac to TAC (divide by 10^18)
-      const bondedInTac = (BigInt(bondedTokens) / BigInt(10**18)).toString();
-      console.log(`🥩 Total bonded tokens: ${bondedInTac} TAC`);
-      return bondedInTac;
+      console.log(`🥩 Total bonded tokens: ${bondedTokens} utac`);
+      return bondedTokens;
     } catch (error) {
       console.error('Failed to fetch total bonded tokens:', error);
       return '0';
@@ -274,32 +249,31 @@ export class CosmosClient {
       // Transform the data and fetch commission for each validator
       const transformedValidators = await Promise.all(
         restrictedValidators.map(async (validator: any) => {
-          // Convert tokens from wei to TAC (divide by 10^18) using BigInt for precision
-          const tokensInWei = validator.tokens || '0';
-          const tokensInTac = (BigInt(tokensInWei) / BigInt(10**18)).toString();
+          // Keep tokens in utac (no conversion)
+          const tokensInUtac = validator.tokens || '0';
           
-          // Fetch unclaimed rewards (commission) for this validator
-          const unclaimedRewards = await this.getValidatorCommission(validator.operator_address);
+          // Fetch unclaimed rewards (commission) for this validator - now returns utac
+          const unclaimedRewardsUtac = await this.getValidatorCommission(validator.operator_address);
           
-          // Get claimed rewards from transaction history
-          const claimedRewards = claimedRewardsMap.get(validator.operator_address) || '0';
-          const totalRewards = (BigInt(claimedRewards) + BigInt(unclaimedRewards)).toString();
+          // Get claimed rewards from transaction history - now returns utac
+          const claimedRewardsUtac = claimedRewardsMap.get(validator.operator_address) || '0';
+          const totalRewardsUtac = (BigInt(claimedRewardsUtac) + BigInt(unclaimedRewardsUtac)).toString();
           
-          // Calculate burn amount: 88.888889% of total rewards (which equals 80% of original staking rewards)
-          // Using 888889/1000000 to represent 88.888889%
-          const totalRewardsToBeBurn = (BigInt(totalRewards) * BigInt(888889) / BigInt(1000000)).toString();
+          // Calculate burn amount: exactly 8/9 of total rewards (which equals 80% of original staking rewards)
+          // Using exact fraction 8/9 for mathematical precision with no rounding errors
+          const totalRewardsToBeBurnUtac = (BigInt(totalRewardsUtac) * BigInt(8) / BigInt(9)).toString();
           
           return {
             address: validator.operator_address,
             moniker: validator.description?.moniker || 'Unknown',
             status: validator.status,
             isActive: validator.status === 'BOND_STATUS_BONDED',
-            totalAccumulatedRewards: totalRewards,
-            claimedRewards: claimedRewards,
-            unclaimedRewards: unclaimedRewards,
+            totalAccumulatedRewards: totalRewardsUtac,
+            claimedRewards: claimedRewardsUtac,
+            unclaimedRewards: unclaimedRewardsUtac,
             totalRewardsAlreadyBurnt: '0',
-            totalRewardsToBeBurn: totalRewardsToBeBurn,
-            totalAmountDelegated: tokensInTac
+            totalRewardsToBeBurn: totalRewardsToBeBurnUtac,
+            totalAmountDelegated: tokensInUtac
           };
         })
       );

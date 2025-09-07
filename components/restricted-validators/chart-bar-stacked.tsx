@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Rectangle, XAxis, YAxis } from "recharts";
+import type { RectangleProps, BarProps } from "recharts";
 
 import {
   Card,
@@ -47,6 +48,30 @@ export function ChartBarStacked() {
   const [error, setError] = useState<string | null>(null);
   const { selectedPeriod, refreshKey } = usePeriod();
 
+  const renderClaimedShape: BarProps["shape"] = (props: unknown) => {
+    const rectProps = props as RectangleProps & {
+      payload?: { unclaimed?: number | string };
+    };
+    const unclaimed = Number(rectProps.payload?.unclaimed ?? 0);
+    const radius =
+      unclaimed === 0
+        ? ([4, 4, 4, 4] as [number, number, number, number])
+        : ([4, 0, 0, 4] as [number, number, number, number]);
+    return <Rectangle {...rectProps} radius={radius} />;
+  };
+
+  const renderUnclaimedShape: BarProps["shape"] = (props: unknown) => {
+    const rectProps = props as RectangleProps & {
+      payload?: { claimed?: number | string };
+    };
+    const claimed = Number(rectProps.payload?.claimed ?? 0);
+    const radius =
+      claimed === 0
+        ? ([4, 4, 4, 4] as [number, number, number, number])
+        : ([0, 4, 4, 0] as [number, number, number, number]);
+    return <Rectangle {...rectProps} radius={radius} />;
+  };
+
   useEffect(() => {
     async function fetchValidators() {
       try {
@@ -63,8 +88,16 @@ export function ChartBarStacked() {
 
         const transformedData = (result.validators as SourceValidator[]).map(
           (validator) => {
-            const claimed = parseFloat(validator.claimedRewards || "0");
-            const unclaimed = parseFloat(validator.unclaimedRewards || "0");
+            // Convert utac to TAC using proper converter
+            const claimed = parseFloat(
+              formatTacAmount(validator.claimedRewards || "0").replace(/,/g, "")
+            );
+            const unclaimed = parseFloat(
+              formatTacAmount(validator.unclaimedRewards || "0").replace(
+                /,/g,
+                ""
+              )
+            );
             const total = claimed + unclaimed;
 
             // Truncate moniker for display
@@ -202,7 +235,7 @@ export function ChartBarStacked() {
                 <ChartTooltipContent
                   hideLabel={false}
                   formatter={(value, name) => [
-                    `${formatTacAmount(value as number)} TAC`,
+                    `${formatTacAmount(value as number)} TAC - `,
                     chartConfig[name as keyof typeof chartConfig]?.label ||
                       name,
                   ]}
@@ -218,13 +251,13 @@ export function ChartBarStacked() {
               dataKey="claimed"
               stackId="a"
               fill="var(--color-claimed)"
-              radius={[4, 4, 4, 4]}
+              shape={renderClaimedShape}
             />
             <Bar
               dataKey="unclaimed"
               stackId="a"
               fill="var(--color-unclaimed)"
-              radius={[4, 4, 4, 4]}
+              shape={renderUnclaimedShape}
             />
           </BarChart>
         </ChartContainer>

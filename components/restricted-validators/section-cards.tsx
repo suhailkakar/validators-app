@@ -47,9 +47,9 @@ export function SectionCards() {
 
         const totalRewards = totalClaimed + totalUnclaimed;
 
-        // Calculate burn obligation: 88.888889% of total rewards
+        // Calculate burn obligation: exactly 8/9 of total rewards (80% of original staking rewards)
         const burnObligation =
-          (totalRewards * BigInt(888889)) / BigInt(1000000);
+          (totalRewards * BigInt(8)) / BigInt(9);
 
         // Get total network-wide staked amount
         const totalBondedStr = await cosmosClient.getTotalBondedTokens();
@@ -63,9 +63,9 @@ export function SectionCards() {
 
         console.log(`🔍 Staking calculation debug:`);
         console.log(
-          `Total staked to restricted validators: ${totalStaked.toString()} TAC`
+          `Total staked to restricted validators: ${totalStaked.toString()} utac`
         );
-        console.log(`Total network-wide staked: ${totalBonded.toString()} TAC`);
+        console.log(`Total network-wide staked: ${totalBonded.toString()} utac`);
         console.log(`Percentage: ${percentStaked.toFixed(4)}%`);
 
         setData({
@@ -138,7 +138,7 @@ export function SectionCards() {
           </CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
             {data
-              ? formatTacAmount(parseFloat(data.totalRewardsToRestricted))
+              ? formatTacAmount(data.totalRewardsToRestricted)
               : "0"}{" "}
             <TAC_LABEL />
           </CardTitle>
@@ -173,7 +173,7 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>80% of Total Staking Rewards</CardDescription>
           <CardTitle className="text-2xl font-semibold  flex items-center gap-2">
-            {data ? formatTacAmount(parseFloat(data.burnObligation)) : "0"}{" "}
+            {data ? formatTacAmount(data.burnObligation) : "0"}{" "}
             <TAC_LABEL />
           </CardTitle>
         </CardHeader>

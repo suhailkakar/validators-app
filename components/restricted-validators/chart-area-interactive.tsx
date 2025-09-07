@@ -17,6 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Skeleton } from "../ui/skeleton";
 
 export const description = "Monthly burn amounts chart";
 
@@ -61,9 +62,12 @@ export function ChartAreaInteractive() {
         const result = await cosmosClient.getValidators();
 
         // Calculate total burnt amount from all validators
-        const totalBurnt = result.validators.reduce((sum: number, validator: any) => {
-          return sum + parseFloat(validator.totalRewardsAlreadyBurnt || "0");
-        }, 0);
+        const totalBurnt = result.validators.reduce(
+          (sum: number, validator: any) => {
+            return sum + parseFloat(validator.totalRewardsAlreadyBurnt || "0");
+          },
+          0
+        );
 
         console.log(`🔥 Total burnt from cosmosClient: ${totalBurnt} TAC`);
 
@@ -88,6 +92,20 @@ export function ChartAreaInteractive() {
     fetchBurnData();
   }, [selectedPeriod, refreshKey]);
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-96 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="@container/card flex flex-col">
       <CardHeader>
@@ -102,69 +120,59 @@ export function ChartAreaInteractive() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
-        {loading ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-muted-foreground">Loading burn data...</div>
-          </div>
-        ) : error ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-red-500">{error}</div>
-          </div>
-        ) : (
-          <ChartContainer config={chartConfig} className="h-full">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="fillBurnAmount" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-burnAmount)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-burnAmount)"
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="name"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={32}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={formatLargeNumber}
-                domain={[0, 2000000]}
-                ticks={[0, 500000, 1000000, 1500000, 2000000]}
-              />
-              <ChartTooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(value) => `${value} 2025`}
-                    formatter={(value) => [
-                      `${(value as number).toLocaleString()} TAC`,
-                      "Total Burnt",
-                    ]}
-                    indicator="dot"
-                  />
-                }
-              />
-              <Area
-                dataKey="burnAmount"
-                type="linear"
-                fill="url(#fillBurnAmount)"
-                stroke="var(--color-burnAmount)"
-              />
-            </AreaChart>
-          </ChartContainer>
-        )}
+        <ChartContainer config={chartConfig} className="h-full">
+          <AreaChart data={chartData}>
+            <defs>
+              <linearGradient id="fillBurnAmount" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-burnAmount)"
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-burnAmount)"
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="name"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={32}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={formatLargeNumber}
+              domain={[0, 2000000]}
+              ticks={[0, 500000, 1000000, 1500000, 2000000]}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) => `${value} 2025`}
+                  formatter={(value) => [
+                    `${(value as number).toLocaleString()} TAC - `,
+                    "Total Burnt",
+                  ]}
+                  indicator="dot"
+                />
+              }
+            />
+            <Area
+              dataKey="burnAmount"
+              type="linear"
+              fill="url(#fillBurnAmount)"
+              stroke="var(--color-burnAmount)"
+            />
+          </AreaChart>
+        </ChartContainer>
       </CardContent>
     </Card>
   );
